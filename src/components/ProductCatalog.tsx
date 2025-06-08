@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const ProductCatalog = () => {
   const [filters, setFilters] = useState({
-    productType: '',
+    productType: 'all',
     scent: '',
     search: ''
   });
@@ -20,7 +20,7 @@ const ProductCatalog = () => {
 
   const filteredProducts = useMemo(() => {
     return productData.filter(product => {
-      const matchesType = !filters.productType || product.productType === filters.productType;
+      const matchesType = filters.productType === 'all' || product.productType === filters.productType;
       const matchesScent = !filters.scent || product.scent.toLowerCase().includes(filters.scent.toLowerCase());
       const matchesSearch = !filters.search || 
         product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -47,7 +47,7 @@ const ProductCatalog = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ productType: '', scent: '', search: '' });
+    setFilters({ productType: 'all', scent: '', search: '' });
   };
 
   return (
@@ -70,7 +70,7 @@ const ProductCatalog = () => {
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 {productTypes.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
