@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "supabase/functions/submit-purchase-order/index.ts",
-      "use": "@vercel/deno"
-    },
-    {
       "src": "package.json",
       "use": "@vercel/node",
       "config": { "distDir": "dist" }
