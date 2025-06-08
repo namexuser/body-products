@@ -3,8 +3,10 @@
   "builds": [
     {
       "src": "supabase/functions/submit-purchase-order/index.ts",
-      "use": "@vercel/deno",
+      "use": "@vercel/node",
       "config": {
+        "handler": "supabase/functions/submit-purchase-order/index.ts",
+        "runtime": "nodejs18",
         "importMap": "supabase/functions/submit-purchase-order/import_map.json"
       }
     },
