@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ExternalLink, Package, Plus } from 'lucide-react';
+import { ExternalLink, Package, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,138 +46,196 @@ const ProductCatalog = () => {
     setQuantities(prev => ({ ...prev, [product.id]: 1 }));
   };
 
+  const updateQuantity = (productId: string, change: number) => {
+    setQuantities(prev => {
+      const currentQty = prev[productId] || 1;
+      const newQty = Math.max(1, currentQty + change);
+      return { ...prev, [productId]: newQty };
+    });
+  };
+
   const clearFilters = () => {
     setFilters({ productType: 'all', scent: '', search: '' });
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-primary mb-4">Product Catalog</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Browse our selection of premium body care products. Click "View Full Details" to see product images and detailed descriptions on the brand's official website.
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold mb-4">Filter Products</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Product Type</label>
-            <Select value={filters.productType} onValueChange={(value) => setFilters(prev => ({ ...prev, productType: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {productTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Scent</label>
-            <Input
-              placeholder="e.g., Lavender"
-              value={filters.scent}
-              onChange={(e) => setFilters(prev => ({ ...prev, scent: e.target.value }))}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Search</label>
-            <Input
-              placeholder="Product name or SKU"
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            />
-          </div>
-          
-          <div className="flex items-end">
-            <Button variant="outline" onClick={clearFilters} className="w-full">
-              Clear Filters
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-primary">Product Catalog</h1>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Browse our premium body care collection. View detailed product information and images on brand websites, then add your selections to cart for quick ordering.
+          </p>
         </div>
-      </div>
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map(product => (
-          <Card key={product.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="text-center">
-              <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                <Package size={48} className="text-gray-400" />
-                <span className="ml-2 text-gray-500 text-sm">Product Image</span>
-              </div>
-              <CardTitle className="text-lg">{product.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{product.size}</p>
-            </CardHeader>
-            
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">SKU:</span>
-                <span className="text-sm">{product.itemNumber}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">MSRP:</span>
-                <span className="text-lg font-bold text-primary">${product.msrp.toFixed(2)}</span>
+        {/* Filters Section */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Filter Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Product Type</label>
+                <Select value={filters.productType} onValueChange={(value) => setFilters(prev => ({ ...prev, productType: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {productTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Type:</span>
-                <span className="text-sm">{product.productType}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Scent:</span>
-                <span className="text-sm">{product.scent}</span>
-              </div>
-            </CardContent>
-            
-            <CardFooter className="space-y-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => window.open(product.brandWebsiteLink, '_blank')}
-              >
-                <ExternalLink size={16} className="mr-2" />
-                View Full Details & Photo on Brand Website
-              </Button>
-              
-              <div className="flex items-center space-x-2 w-full">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Scent</label>
                 <Input
-                  type="number"
-                  min="1"
-                  value={quantities[product.id] || 1}
-                  onChange={(e) => setQuantities(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 1 }))}
-                  className="w-20"
+                  placeholder="e.g., Lavender, Vanilla..."
+                  value={filters.scent}
+                  onChange={(e) => setFilters(prev => ({ ...prev, scent: e.target.value }))}
+                  className="w-full"
                 />
-                <Button
-                  onClick={() => handleAddToCart(product)}
-                  className="flex-1"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Add to Cart
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Search</label>
+                <Input
+                  placeholder="Product name or SKU..."
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="flex items-end">
+                <Button variant="outline" onClick={clearFilters} className="w-full">
+                  Clear All Filters
                 </Button>
               </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-12">
-          <Package size={64} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-          <p className="text-gray-500">Try adjusting your filters to see more products.</p>
+        {/* Results Summary */}
+        <div className="flex justify-between items-center">
+          <p className="text-muted-foreground">
+            Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+          </p>
         </div>
-      )}
+
+        {/* Product Grid */}
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <Card key={product.id} className="hover:shadow-lg transition-all duration-200 flex flex-col h-full">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                    <div className="text-center">
+                      <Package size={48} className="text-muted-foreground mx-auto mb-2" />
+                      <span className="text-xs text-muted-foreground">Product Image</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg leading-tight">{product.name}</CardTitle>
+                  <p className="text-sm text-muted-foreground font-medium">{product.size}</p>
+                </CardHeader>
+                
+                <CardContent className="flex-1 space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">SKU:</span>
+                      <span className="text-sm font-mono">{product.itemNumber}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">MSRP:</span>
+                      <span className="text-xl font-bold text-primary">${product.msrp.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Type:</span>
+                      <span className="text-sm">{product.productType}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Scent:</span>
+                      <span className="text-sm">{product.scent}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="pt-4 flex flex-col gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => window.open(product.brandWebsiteLink, '_blank')}
+                  >
+                    <ExternalLink size={16} className="mr-2" />
+                    View Details & Photos
+                  </Button>
+                  
+                  {/* Quantity Selector */}
+                  <div className="flex items-center justify-center gap-2 w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(product.id, -1)}
+                      className="h-9 w-9 p-0"
+                    >
+                      <Minus size={16} />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quantities[product.id] || 1}
+                      onChange={(e) => setQuantities(prev => ({ 
+                        ...prev, 
+                        [product.id]: Math.max(1, parseInt(e.target.value) || 1) 
+                      }))}
+                      className="w-16 text-center h-9"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(product.id, 1)}
+                      className="h-9 w-9 p-0"
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <Button
+                    onClick={() => handleAddToCart(product)}
+                    className="w-full h-10"
+                    size="sm"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Add to Cart
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="py-16">
+            <CardContent className="text-center">
+              <Package size={64} className="mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-xl font-medium text-foreground mb-2">No products found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your filters or search terms to find what you're looking for.
+              </p>
+              <Button variant="outline" onClick={clearFilters}>
+                Clear All Filters
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
