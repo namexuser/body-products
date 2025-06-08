@@ -13,12 +13,8 @@
       "dest": "supabase/functions/submit-purchase-order/index.ts"
     },
     {
-      "src": "/[^.]+",
-      "dest": "/index.html"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/dist/index.html"
     }
   ]
 }
