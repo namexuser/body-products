@@ -212,4 +212,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+export const submitPurchaseOrder = handler;
