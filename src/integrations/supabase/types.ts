@@ -9,13 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          brand_website_link: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          ingredients: string[] | null
+          is_active: boolean | null
+          item_number: string
+          msrp: number
+          name: string
+          product_type: string
+          scent: string | null
+          size: string
+          updated_at: string
+        }
+        Insert: {
+          brand_website_link?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_active?: boolean | null
+          item_number: string
+          msrp: number
+          name: string
+          product_type: string
+          scent?: string | null
+          size: string
+          updated_at?: string
+        }
+        Update: {
+          brand_website_link?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_active?: boolean | null
+          item_number?: string
+          msrp?: number
+          name?: string
+          product_type?: string
+          scent?: string | null
+          size?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_number: string
+          msrp: number
+          product_id: string | null
+          product_name: string
+          product_size: string
+          purchase_order_id: string | null
+          quantity: number
+          subtotal: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_number: string
+          msrp: number
+          product_id?: string | null
+          product_name: string
+          product_size: string
+          purchase_order_id?: string | null
+          quantity: number
+          subtotal: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_number?: string
+          msrp?: number
+          product_id?: string | null
+          product_name?: string
+          product_size?: string
+          purchase_order_id?: string | null
+          quantity?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          customer_city: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          estimated_total: number
+          id: string
+          notes: string | null
+          order_number: string
+          status: string | null
+          total_msrp: number
+          total_units: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_city: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          estimated_total: number
+          id?: string
+          notes?: string | null
+          order_number: string
+          status?: string | null
+          total_msrp: number
+          total_units: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_city?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          estimated_total?: number
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: string | null
+          total_msrp?: number
+          total_units?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

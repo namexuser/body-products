@@ -1,1 +1,5 @@
+
 project_id = "skybfzbmpaibfvvydioh"
+
+[functions.submit-purchase-order]
+verify_jwt = false

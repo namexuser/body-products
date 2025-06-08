@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart, getCartTotal } = useCart();
@@ -42,14 +43,36 @@ const Cart = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Submitting purchase order...');
       
-      toast.success('Purchase order submitted successfully! You will receive a confirmation email shortly.');
-      setClientInfo({ name: '', email: '', phone: '', city: '' });
-      clearCart();
-    } catch (error) {
-      toast.error('Failed to submit order. Please try again.');
+      const { data, error } = await supabase.functions.invoke('submit-purchase-order', {
+        body: {
+          customerInfo: clientInfo,
+          cartItems: cartItems,
+          totals: {
+            totalMSRP,
+            totalUnits,
+            unitPrice,
+            estimatedTotal
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error submitting order:', error);
+        throw new Error(error.message || 'Failed to submit order');
+      }
+
+      if (data?.success) {
+        toast.success(`Purchase order ${data.orderNumber} submitted successfully! Confirmation email sent.`);
+        setClientInfo({ name: '', email: '', phone: '', city: '' });
+        clearCart();
+      } else {
+        throw new Error(data?.error || 'Failed to submit order');
+      }
+    } catch (error: any) {
+      console.error('Error submitting order:', error);
+      toast.error(error.message || 'Failed to submit order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
