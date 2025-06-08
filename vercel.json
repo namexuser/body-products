@@ -1,9 +1,20 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "supabase/functions/submit-purchase-order/index.ts",
+      "use": "@vercel/deno"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": { "distDir": "dist" }
+    }
+  ],
   "routes": [
     {
-      "src": "/[^.]+\\.(css|js|svg|png|jpg|gif|woff2?|ttf|eot)",
-      "continue": true
+      "src": "/api/submit-purchase-order",
+      "dest": "supabase/functions/submit-purchase-order/index.ts"
     },
     {
       "src": "/(.*)",
