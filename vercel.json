@@ -2,11 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "supabase/functions/submit-purchase-order/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "importMap": "supabase/functions/submit-purchase-order/import_map.json"
-      }
+      "src": "supabase/functions/submit-purchase-order/index.ts",
+      "use": "@vercel/deno"
     },
     {
       "src": "package.json",
