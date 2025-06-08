@@ -30,10 +30,10 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-npm i
+bun install
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+bun run dev
 ```
 
 **Edit a file directly in GitHub**
@@ -57,8 +57,14 @@ This project is built with:
 - Vite
 - TypeScript
 - React
-- shadcn-ui
+- Radix UI (shadcn-ui)
 - Tailwind CSS
+- Supabase
+- Zod
+- React Hook Form
+- Lucide React
+- Next Themes
+- Tanstack React Query
 
 ## How can I deploy this project?
 
@@ -71,3 +77,46 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Vercel Deployment Configuration
+
+To ensure a successful deployment to Vercel, follow these steps:
+
+1.  **Set up Environment Variables:**
+    *   In your Vercel project settings, add the following environment variables:
+        *   `VITE_SUPABASE_URL`: Your Supabase project URL.
+        *   `VITE_SUPABASE_ANON_KEY`: Your Supabase project anon key.
+        *   `RESEND_API_KEY`: Your Resend API key.
+
+2.  **Configure Build Settings:**
+    *   In your Vercel project settings, ensure that the build command is set to `bun run build` and the output directory is set to `dist`.
+
+## Supabase Setup
+
+1.  **Create a Supabase Project:**
+    *   Go to the [Supabase website](https://supabase.com/) and create a new project.
+    *   Obtain the `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the project settings.
+
+2.  **Enable the `submit-purchase-order` Function:**
+    *   In the Supabase dashboard, enable the `submit-purchase-order` function.
+
+3.  **Configure the `submit-purchase-order` Function:**
+    *   In your Vercel project settings, navigate to the `submit-purchase-order` function.
+    *   Add the following environment variable:
+        *   `RESEND_API_KEY`: Your Resend API key.
+
+## Custom Domain
+
+After testing in the staging environment, you can add your own domain to the Vercel project.
+
+## Contribution Guidelines
+
+We welcome contributions to this project! If you'd like to contribute, please follow these guidelines:
+
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Make your changes and commit them with clear, concise messages.
+4.  Test your changes thoroughly.
+5.  Submit a pull request.
+
+Please ensure that your code follows the project's coding standards and that you include appropriate tests.

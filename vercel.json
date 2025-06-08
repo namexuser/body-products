@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "supabase/functions/submit-purchase-order/index.ts",
+      "use": "@vercel/deno",
+      "config": {
+        "importMap": "supabase/functions/submit-purchase-order/import_map.json"
+      }
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
