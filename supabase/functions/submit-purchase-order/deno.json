@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.window", "deno.unstable"],
+    "strict": true
+  },
+  "permissions": {
+    "net": ["*"],
+    "env": ["SUPABASE_URL", "SUPABASE_ANON_KEY", "RESEND_API_KEY"]
+  }
+}

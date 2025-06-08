@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import ProductCatalog from '../components/ProductCatalog';
@@ -6,12 +5,10 @@ import Cart from '../components/Cart';
 import HowToOrder from '../components/HowToOrder';
 import AboutUs from '../components/AboutUs';
 import ContactUs from '../components/ContactUs';
-import { CartProvider } from '../context/CartContext';
+import { CartProvider, useCart } from '../context/CartContext';
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState('catalog');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const sections = [
     { id: 'catalog', label: 'Products', component: ProductCatalog },
     { id: 'cart', label: 'Cart', component: Cart },
@@ -20,89 +17,80 @@ const Index = () => {
     { id: 'contact', label: 'Contact Us', component: ContactUs },
   ];
 
+  return (
+    <CartProvider>
+      <AppContent currentSection={currentSection} setCurrentSection={setCurrentSection} sections={sections} />
+    </CartProvider>
+  );
+};
+
+const AppContent = ({ currentSection, setCurrentSection, sections }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { cartItems } = useCart();
+  const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
   const CurrentComponent = sections.find(s => s.id === currentSection)?.component || ProductCatalog;
 
   return (
-    <CartProvider>
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-primary">Body Product Inventory</h1>
-              </div>
-              
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex space-x-8">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setCurrentSection(section.id)}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      currentSection === section.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-gray-600 hover:text-primary hover:bg-gray-100'
-                    }`}
-                  >
-                    {section.label}
-                  </button>
-                ))}
-              </nav>
-
-              {/* Mobile menu button */}
-              <div className="md:hidden">
+    <div className="min-h-screen bg-background">
+      <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-primary">Body Product Inventory</h1>
+            </div>
+            
+            <nav className="hidden md:flex space-x-8 items-center">
+              {sections.map((section) => (
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="text-gray-600 hover:text-primary"
+                  key={section.id}
+                  onClick={() => setCurrentSection(section.id)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    currentSection === section.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-gray-600 hover:text-primary hover:bg-gray-100'
+                  } ${section.id === 'cart' ? 'relative' : ''}`}
                 >
-                  {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  {section.label}
+                  {section.id === 'cart' && itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
                 </button>
-              </div>
-            </div>
+              ))}
+            </nav>
 
-            {/* Mobile Navigation */}
-            {isMenuOpen && (
-              <div className="md:hidden py-4 border-t">
-                <nav className="flex flex-col space-y-2">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => {
-                        setCurrentSection(section.id);
-                        setIsMenuOpen(false);
-                      }}
-                      className={`px-3 py-2 rounded-md text-sm font-medium text-left transition-colors ${
-                        currentSection === section.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-gray-600 hover:text-primary hover:bg-gray-100'
-                      }`}
-                    >
-                      {section.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <CurrentComponent />
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-50 border-t mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center text-gray-600">
-              <p>&copy; 2024 Body Product Inventory. All rights reserved.</p>
-              <p className="mt-2 text-sm">Professional intermediary body product distribution</p>
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-gray-600 hover:text-primary relative"
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                {!isMenuOpen && itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
-        </footer>
-      </div>
-    </CartProvider>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16">
+        <CurrentComponent />
+      </main>
+
+      <footer className="bg-gray-50 border-t mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-600">
+            <p>&copy; 2024 Body Product Inventory. All rights reserved.</p>
+            <p className="mt-2 text-sm">Professional intermediary body product distribution</p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 
