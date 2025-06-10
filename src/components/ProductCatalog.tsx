@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ExternalLink, Package, Plus, Minus, Info } from 'lucide-react';
+import { Package, Plus, Minus, Info, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,12 +18,13 @@ interface DatabaseProduct {
   size: string;
   msrp: number;
   item_number: string;
-  brand_website_link: string;
   scent: string;
   ingredients: string[] | null;
   description: string | null;
   image_url: string | null;
   is_active: boolean;
+  quantity: number | null;
+  location: string | null;
 }
 
 const ProductCatalog = () => {
@@ -36,18 +37,26 @@ const ProductCatalog = () => {
   });
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [expandedIngredients, setExpandedIngredients] = useState<Record<string, boolean>>({});
+  const [currentImage, setCurrentImage] = useState<Record<string, 'front' | 'back'>>({});
   const { addToCart } = useCart();
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  const inventoryItemNumbers = [
+    "028005794", "028007116", "0667559299882", "028005784",
+    "028003936", "028003930", "0667659311231", "0667559282440",
+    "028008347", "028008681", "028008682"
+  ];
+
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, quantity, location')
         .eq('is_active', true)
+        .in('item_number', inventoryItemNumbers) // Filter by inventory item numbers
         .order('name');
 
       if (error) {
@@ -200,13 +209,26 @@ const ProductCatalog = () => {
             {filteredProducts.map(product => (
               <Card key={product.id} className="hover:shadow-lg transition-all duration-200 flex flex-col h-full">
                 <CardHeader className="text-center pb-4">
-                  <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                  <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
                     {product.image_url ? (
-                      <img 
-                        src={product.image_url} 
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img
+                          src={currentImage[product.id] === 'back' ? `/product-images/${product.sku === '0667659311231' ? product.sku : product.item_number}-B.jpg` : `/product-images/${product.sku === '0667659311231' ? product.sku : product.item_number}.jpg`}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 bg-white/70 hover:bg-white"
+                          onClick={() => setCurrentImage(prev => ({
+                            ...prev,
+                            [product.id]: prev[product.id] === 'back' ? 'front' : 'back'
+                          }))}
+                        >
+                          <RefreshCcw size={16} />
+                        </Button>
+                      </>
                     ) : (
                       <div className="text-center">
                         <Package size={48} className="text-muted-foreground mx-auto mb-2" />
@@ -243,11 +265,38 @@ const ProductCatalog = () => {
                       <span className="text-sm">{product.scent}</span>
                     </div>
 
+                    {/* Inventory Section */}
+                    {/* Inventory Section */}
+                    {product.quantity !== null && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Availability:</span>
+                          {product.quantity > 100 ? (
+                            <Badge variant="default" className="bg-green-500 hover:bg-green-500">In Stock</Badge>
+                          ) : product.quantity > 0 ? (
+                            <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-500">Low Stock</Badge>
+                          ) : (
+                            <Badge variant="destructive">Out of Stock</Badge>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Quantity:</span>
+                          <span className="text-sm">{product.quantity}</span>
+                        </div>
+                        {product.location && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Location:</span>
+                            <span className="text-sm">{product.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Ingredients Section */}
                     {product.ingredients && product.ingredients.length > 0 && (
                       <div className="border-t pt-3">
-                        <Collapsible 
-                          open={expandedIngredients[product.id]} 
+                        <Collapsible
+                          open={expandedIngredients[product.id]}
                           onOpenChange={() => toggleIngredients(product.id)}
                         >
                           <CollapsibleTrigger asChild>
@@ -277,16 +326,6 @@ const ProductCatalog = () => {
                 </CardContent>
                 
                 <CardFooter className="pt-4 flex flex-col gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => window.open(product.brand_website_link, '_blank')}
-                  >
-                    <ExternalLink size={16} className="mr-2" />
-                    View Details & Photos
-                  </Button>
-                  
                   {/* Quantity Selector */}
                   <div className="flex items-center justify-center gap-2 w-full">
                     <Button
@@ -294,6 +333,7 @@ const ProductCatalog = () => {
                       size="sm"
                       onClick={() => updateQuantity(product.id, -1)}
                       className="h-9 w-9 p-0"
+                      disabled={product.quantity === 0}
                     >
                       <Minus size={16} />
                     </Button>
@@ -301,17 +341,19 @@ const ProductCatalog = () => {
                       type="number"
                       min="1"
                       value={quantities[product.id] || 1}
-                      onChange={(e) => setQuantities(prev => ({ 
-                        ...prev, 
-                        [product.id]: Math.max(1, parseInt(e.target.value) || 1) 
+                      onChange={(e) => setQuantities(prev => ({
+                        ...prev,
+                        [product.id]: Math.max(1, parseInt(e.target.value) || 1)
                       }))}
                       className="w-16 text-center h-9"
+                      disabled={product.quantity === 0}
                     />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(product.id, 1)}
                       className="h-9 w-9 p-0"
+                      disabled={product.quantity === 0}
                     >
                       <Plus size={16} />
                     </Button>
@@ -322,6 +364,7 @@ const ProductCatalog = () => {
                     onClick={() => handleAddToCart(product)}
                     className="w-full h-10"
                     size="sm"
+                    disabled={product.quantity === 0}
                   >
                     <Plus size={16} className="mr-2" />
                     Add to Cart

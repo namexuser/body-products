@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       products: {
         Row: {
-          brand_website_link: string | null
           created_at: string
           description: string | null
           id: string
@@ -19,15 +18,17 @@ export type Database = {
           ingredients: string[] | null
           is_active: boolean | null
           item_number: string
+          location: string | null
           msrp: number
           name: string
           product_type: string
+          quantity: number | null
           scent: string | null
           size: string
           updated_at: string
+          sku: string | null // Added sku
         }
         Insert: {
-          brand_website_link?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -35,15 +36,17 @@ export type Database = {
           ingredients?: string[] | null
           is_active?: boolean | null
           item_number: string
+          location?: string | null
           msrp: number
           name: string
           product_type: string
+          quantity?: number | null
           scent?: string | null
           size: string
           updated_at?: string
+          sku?: string | null // Added sku
         }
         Update: {
-          brand_website_link?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -51,12 +54,15 @@ export type Database = {
           ingredients?: string[] | null
           is_active?: boolean | null
           item_number?: string
+          location?: string | null
           msrp?: number
           name?: string
           product_type?: string
+          quantity?: number | null
           scent?: string | null
           size?: string
           updated_at?: string
+          sku?: string | null // Added sku
         }
         Relationships: []
       }
