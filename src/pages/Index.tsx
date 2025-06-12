@@ -51,7 +51,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
                 >
                   {section.label}
                   {section.id === 'cart' && itemCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
                       {itemCount}
                     </span>
                   )}
@@ -66,7 +66,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
               >
                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 {!isMenuOpen && itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
                     {itemCount}
                   </span>
                 )}
