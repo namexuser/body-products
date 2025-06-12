@@ -62,7 +62,7 @@ const HowToOrder = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="flex items-start space-x-4">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                 1
               </div>
@@ -71,7 +71,7 @@ const HowToOrder = () => {
                 <p className="text-muted-foreground">Browse our product catalog and choose items by viewing details. Use filters for type or scent, or search by name/SKU.</p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
@@ -80,7 +80,7 @@ const HowToOrder = () => {
                 <p className="text-muted-foreground">Select quantities and add products to your cart. Adjust quantities anytime before submitting.</p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                 3
               </div>
@@ -89,7 +89,7 @@ const HowToOrder = () => {
                 <p className="text-muted-foreground">Check your cart to confirm items. Ensure your order totals at least $1,000 after discounts. Our tiered pricing adjusts your estimated total based on order size.</p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                 4
               </div>
@@ -98,7 +98,7 @@ const HowToOrder = () => {
                 <p className="text-muted-foreground">Enter your contact details and submit your purchase order request.</p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                 5
               </div>
@@ -150,19 +150,19 @@ const HowToOrder = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-start space-x-3">
+            <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
               <p><strong>Minimum Order:</strong> 250 Units minimum required for all purchase orders, AND your order must total at least $1,000 after discounts.</p>
             </div>
-            <div className="flex items-start space-x-3">
+            <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
               <p><strong>Availability:</strong> Product availability is not guaranteed until paid.</p>
             </div>
-            <div className="flex items-start space-x-3">
+            <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
               <p><strong>Payment:</strong> USDC w/0.5% fee, Credit Card w/3% fee, ACH, Cash, Zelle.</p>
             </div>
-            <div className="flex items-start space-x-3">
+            <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
               <p><strong>Shipping:</strong> If shipping is requested cost is calculated based on order size and destination.</p>
             </div>

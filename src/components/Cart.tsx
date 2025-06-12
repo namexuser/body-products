@@ -103,20 +103,20 @@ const Cart = () => {
         <CardContent>
           <div className="space-y-4">
             {cartItems.map(item => (
-              <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                <div className="flex-1">
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 border rounded-lg">
+                <div className="flex-1 w-full sm:w-auto">
                   <h4 className="font-medium">{item.name} ({item.type})</h4>
                   <p className="text-sm text-muted-foreground">SKU: {item.itemNumber} • Size: {item.size}</p>
                 </div>
                 
-                <div className="text-right">
+                <div className="text-left sm:text-right w-full sm:w-auto">
                   <p className="font-medium">${item.msrp.toFixed(2)} each</p>
                   <p className="text-sm text-muted-foreground">
                     Subtotal: ${(item.msrp * item.quantity).toFixed(2)}
                   </p>
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-start">
                   <Button
                     variant="outline"
                     size="sm"
@@ -138,7 +138,7 @@ const Cart = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => removeFromCart(item.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 w-full sm:w-auto"
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -238,7 +238,7 @@ const Cart = () => {
               </div>
             </div>
             
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Button
                 type="submit"
                 disabled={!canSubmitOrder || isSubmitting}

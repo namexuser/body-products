@@ -5,6 +5,13 @@ import Cart from '../components/Cart';
 import HowToOrder from '../components/HowToOrder';
 import ContactUs from '../components/ContactUs';
 import { CartProvider, useCart } from '../context/CartContext';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '../components/ui/sheet';
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState('catalog');
@@ -60,17 +67,43 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
             </nav>
 
             <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-600 hover:text-primary relative"
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                {!isMenuOpen && itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
-                    {itemCount}
-                  </span>
-                )}
-              </button>
+              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    className="text-gray-600 hover:text-primary relative"
+                  >
+                    <Menu size={24} />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                        {itemCount}
+                      </span>
+                    )}
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <SheetHeader>
+                    <SheetTitle>Navigation</SheetTitle>
+                  </SheetHeader>
+                  <nav className="flex flex-col space-y-4 mt-4">
+                    {sections.map((section) => (
+                      <button
+                        key={section.id}
+                        onClick={() => {
+                          setCurrentSection(section.id);
+                          setIsMenuOpen(false);
+                        }}
+                        className={`text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                          currentSection === section.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-gray-600 hover:text-primary hover:bg-gray-100'
+                        }`}
+                      >
+                        {section.label}
+                      </button>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
