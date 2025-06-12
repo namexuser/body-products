@@ -40,39 +40,73 @@ const HowToOrder = () => {
   ];
 
   const pricingTiers = [
-    { range: "$1,000 - $2,999", unitPrice: "$3.95", minUnits: "253+" },
-    { range: "$3,000 - $4,999", unitPrice: "$3.25", minUnits: "923+" },
-    { range: "$5,000 - $9,999", unitPrice: "$2.80", minUnits: "1,786+" },
-    { range: "$10,000+", unitPrice: "$2.40", minUnits: "4,166+" }
+    { range: "250+ Units", discount: "73.5%", formula: "(MSRP/100*26.5)" },
+    { range: "900+ Units", discount: "78%", formula: "(MSRP/100*22)" },
+    { range: "1800+ Units", discount: "81%", formula: "(MSRP/100*19)" },
+    { range: "4000+ Units", discount: "84%", formula: "(MSRP/100*16)" }
   ];
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-primary mb-4">How To Order</h2>
+        <h2 className="text-3xl font-bold text-primary mb-4">How to Place Your Order</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Follow these simple steps to place your wholesale body product order with us.
+          Follow these steps to place your purchase order with us.
         </p>
       </div>
 
       {/* Ordering Steps */}
       <Card>
         <CardHeader>
-          <CardTitle>Step-by-Step Ordering Process</CardTitle>
+          <CardTitle>Ordering Process</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {steps.map((step, index) => (
-              <div key={index} className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                  {index + 1}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
-                </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                1
               </div>
-            ))}
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Explore Products</h3>
+                <p className="text-muted-foreground">Browse our product catalog and choose items by viewing details. Use filters for type or scent, or search by name/SKU.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                2
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Add to Cart</h3>
+                <p className="text-muted-foreground">Select quantities and add products to your cart. Adjust quantities anytime before submitting.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                3
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Review Cart & Pricing</h3>
+                <p className="text-muted-foreground">Check your cart to confirm items. Ensure your order totals at least $1,000 after discounts. Our tiered pricing adjusts your estimated total based on order size.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                4
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Submit Order</h3>
+                <p className="text-muted-foreground">Enter your contact details and submit your purchase order request.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                5
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Confirmation & Fulfillment</h3>
+                <p className="text-muted-foreground">We’ll review your request and contact you within 24-48 hours to confirm. Once confirmed, we’ll provide payment and pickup/shipping details. Orders are typically fulfilled within 2 business days.</p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -87,24 +121,24 @@ const HowToOrder = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4">Order Value (MSRP)</th>
-                  <th className="text-left py-3 px-4">Unit Price</th>
                   <th className="text-left py-3 px-4">Minimum Units</th>
+                  <th className="text-left py-3 px-4">Discount</th>
+                  <th className="text-left py-3 px-4">Formula</th>
                 </tr>
               </thead>
               <tbody>
                 {pricingTiers.map((tier, index) => (
                   <tr key={index} className="border-b">
                     <td className="py-3 px-4 font-medium">{tier.range}</td>
-                    <td className="py-3 px-4 text-primary font-semibold">{tier.unitPrice}</td>
-                    <td className="py-3 px-4">{tier.minUnits}</td>
+                    <td className="py-3 px-4 text-primary font-semibold">{tier.discount}</td>
+                    <td className="py-3 px-4">{tier.formula}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            * Pricing is based on total MSRP value of your order. Final pricing subject to availability and confirmation.
+            * Pricing is based on total units of your order. Final pricing subject to availability and confirmation. Discounts are not guaranteed until paid.
           </p>
         </CardContent>
       </Card>
@@ -118,23 +152,19 @@ const HowToOrder = () => {
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Minimum Order:</strong> $1,000 MSRP value required for all wholesale orders.</p>
+              <p><strong>Minimum Order:</strong> 250 Units minimum required for all purchase orders, AND your order must total at least $1,000 after discounts.</p>
             </div>
             <div className="flex items-start space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Product Images:</strong> All product photos and detailed descriptions are available on the respective brand websites linked from each product.</p>
+              <p><strong>Availability:</strong> Product availability is not guaranteed until paid.</p>
             </div>
             <div className="flex items-start space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Availability:</strong> Product availability is subject to manufacturer stock levels and will be confirmed upon order review.</p>
+              <p><strong>Payment:</strong> USDC w/0.5% fee, Credit Card w/3% fee, ACH, Cash, Zelle.</p>
             </div>
             <div className="flex items-start space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Payment Terms:</strong> Payment terms and methods will be provided upon order confirmation.</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Shipping:</strong> Shipping costs calculated based on order size, weight, and destination. Free shipping may be available for large orders.</p>
+              <p><strong>Shipping:</strong> If shipping is requested cost is calculated based on order size and destination.</p>
             </div>
           </div>
         </CardContent>

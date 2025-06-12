@@ -20,7 +20,7 @@ const Cart = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { totalMSRP, totalUnits, estimatedTotal, unitPrice, statusMessage } = getCartTotal();
-  const canSubmitOrder = totalMSRP >= 1000;
+  const canSubmitOrder = totalUnits >= 250 && estimatedTotal >= 1000;
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -31,7 +31,7 @@ const Cart = () => {
     e.preventDefault();
     
     if (!canSubmitOrder) {
-      toast.error('Minimum purchase requirement of $1,000 not met');
+      toast.error('Minimum purchase requirement of 250 units and $1,000 after discounts not met');
       return;
     }
 
@@ -70,9 +70,9 @@ const Cart = () => {
       } else {
         throw new Error(data?.error || 'Failed to submit order');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting order:', error);
-      toast.error(error.message || 'Failed to submit order. Please try again.');
+      toast.error((error instanceof Error ? error.message : 'Unknown error') || 'Failed to submit order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +91,7 @@ const Cart = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-primary mb-4">Shopping Cart</h2>
+        <h2 className="text-3xl font-bold text-primary mb-4">Purchase Order</h2>
         <p className="text-muted-foreground">Review your items and submit your purchase order</p>
       </div>
 
@@ -105,7 +105,7 @@ const Cart = () => {
             {cartItems.map(item => (
               <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
                 <div className="flex-1">
-                  <h4 className="font-medium">{item.name}</h4>
+                  <h4 className="font-medium">{item.name} ({item.type})</h4>
                   <p className="text-sm text-muted-foreground">SKU: {item.itemNumber} • Size: {item.size}</p>
                 </div>
                 
@@ -151,7 +151,7 @@ const Cart = () => {
       {/* Order Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
+          <CardTitle>Order Summary Before Discount</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between">
@@ -167,25 +167,19 @@ const Cart = () => {
           <Separator />
           
           <div className="flex justify-between">
-            <span>Estimated Unit Price:</span>
+            <span>Discounted Unit Price:</span>
             <span className="font-medium">
               {unitPrice > 0 ? `$${unitPrice.toFixed(2)}` : 'N/A'}
             </span>
           </div>
           
           <div className="flex justify-between text-lg font-bold">
-            <span>Estimated Order Total:</span>
+            <span>Discounted Order Total:</span>
             <span className="text-primary">
               {estimatedTotal > 0 ? `$${estimatedTotal.toFixed(2)}` : 'N/A'}
             </span>
           </div>
           
-          <div className="text-center p-3 rounded-lg bg-gray-50">
-            <p className="text-sm font-medium">Minimum Purchase Requirement: $1,000</p>
-            <p className={`text-sm mt-1 ${canSubmitOrder ? 'text-green-600' : 'text-red-600'}`}>
-              {statusMessage}
-            </p>
-          </div>
           
           <p className="text-xs text-muted-foreground text-center">
             Final pricing subject to confirmation after order submission

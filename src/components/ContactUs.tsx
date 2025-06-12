@@ -71,7 +71,7 @@ const ContactUs = () => {
       <div className="text-center">
         <h2 className="text-3xl font-bold text-primary mb-4">Contact Us</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Have questions about our products or need assistance with your order? We're here to help!
+          If you have questions or you need assistance with your order we're here to help!
         </p>
       </div>
 
@@ -144,18 +144,14 @@ const ContactUs = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {contactInfo.map((info, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <info.icon className="text-primary" size={20} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{info.title}</h3>
-                      <p className="text-primary font-medium">{info.details}</p>
-                      <p className="text-sm text-muted-foreground">{info.description}</p>
-                    </div>
-                  </div>
-                ))}
+                <h3 className="font-semibold">Get in Touch</h3>
+                <p className="text-primary font-medium">Phone 305 747 1297</p>
+                <h3 className="font-semibold">Business Hours</h3>
+                <p className="text-primary font-medium">Monday to Friday, 10AM to 5PM EST</p>
+                <p className="text-sm text-muted-foreground">Weekend: By appointment only</p>
+                <h3 className="font-semibold">Mailing Address</h3>
+                <p className="text-primary font-medium">The Liquid Group LLC</p>
+                <p className="text-primary font-medium">78 SW 7th Street, Miami, FL 33130</p>
               </div>
             </CardContent>
           </Card>
@@ -168,22 +164,17 @@ const ContactUs = () => {
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">What is the minimum order amount?</h4>
-                  <p className="text-sm text-muted-foreground">Our minimum order requirement is $1,000 MSRP value to qualify for wholesale pricing.</p>
+                  <p className="text-sm text-muted-foreground">Our minimum order requirement is 250 Units.</p>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-2">How long does order processing take?</h4>
-                  <p className="text-sm text-muted-foreground">Orders are typically processed and shipped within 3-5 business days after payment confirmation.</p>
+                  <p className="text-sm text-muted-foreground">Orders are typically processed within 2-5 business days. Same day delivery is available.</p>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-2">Do you ship internationally?</h4>
-                  <p className="text-sm text-muted-foreground">Currently, we ship within the United States. Contact us for international shipping inquiries.</p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold mb-2">Can I see product samples?</h4>
-                  <p className="text-sm text-muted-foreground">Sample availability varies by manufacturer. Contact us to discuss sample requests for specific products.</p>
+                  <p className="text-sm text-muted-foreground">Contact us for international shipping inquiries.</p>
                 </div>
               </div>
             </CardContent>

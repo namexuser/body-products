@@ -93,6 +93,7 @@ const ProductCatalog = () => {
     addToCart({
       id: product.id,
       name: product.name,
+      type: product.product_type,
       size: product.size,
       msrp: product.msrp,
       itemNumber: product.item_number
@@ -141,7 +142,7 @@ const ProductCatalog = () => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-primary">Product Catalog</h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Browse our premium body care collection. View detailed product information and ingredients, then add your selections to cart for quick ordering.
+            Browse product details and add items to your cart for easy ordering. Minimum order is 250 units. Enjoy discounts of 73% to 84% off MSRP.
           </p>
         </div>
 
@@ -213,7 +214,7 @@ const ProductCatalog = () => {
                     {product.image_url ? (
                       <>
                         <img
-                          src={currentImage[product.id] === 'back' ? `/product-images/${product.sku === '0667659311231' ? product.sku : product.item_number}-B.jpg` : `/product-images/${product.sku === '0667659311231' ? product.sku : product.item_number}.jpg`}
+                          src={currentImage[product.id] === 'back' ? `/product-images/${product.item_number}-B.jpg` : `/product-images/${product.item_number}.jpg`}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
@@ -245,10 +246,6 @@ const ProductCatalog = () => {
                 
                 <CardContent className="flex-1 space-y-3">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">SKU:</span>
-                      <span className="text-sm font-mono">{product.item_number}</span>
-                    </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">MSRP:</span>
@@ -259,11 +256,7 @@ const ProductCatalog = () => {
                       <span className="text-sm font-medium">Type:</span>
                       <Badge variant="secondary">{product.product_type}</Badge>
                     </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Scent:</span>
-                      <span className="text-sm">{product.scent}</span>
-                    </div>
+                  
 
                     {/* Inventory Section */}
                     {/* Inventory Section */}
@@ -283,12 +276,7 @@ const ProductCatalog = () => {
                           <span className="text-sm font-medium">Quantity:</span>
                           <span className="text-sm">{product.quantity}</span>
                         </div>
-                        {product.location && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium">Location:</span>
-                            <span className="text-sm">{product.location}</span>
-                          </div>
-                        )}
+
                       </div>
                     )}
 
@@ -303,7 +291,7 @@ const ProductCatalog = () => {
                             <Button variant="ghost" size="sm" className="w-full justify-between p-2">
                               <span className="text-sm font-medium flex items-center gap-2">
                                 <Info size={14} />
-                                Ingredients ({product.ingredients.length})
+                                Ingredients
                               </span>
                               <span className="text-xs">
                                 {expandedIngredients[product.id] ? 'Hide' : 'Show'}

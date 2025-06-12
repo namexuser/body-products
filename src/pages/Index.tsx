@@ -3,7 +3,6 @@ import { ShoppingCart, Menu, X } from 'lucide-react';
 import ProductCatalog from '../components/ProductCatalog';
 import Cart from '../components/Cart';
 import HowToOrder from '../components/HowToOrder';
-import AboutUs from '../components/AboutUs';
 import ContactUs from '../components/ContactUs';
 import { CartProvider, useCart } from '../context/CartContext';
 
@@ -13,7 +12,6 @@ const Index = () => {
     { id: 'catalog', label: 'Products', component: ProductCatalog },
     { id: 'cart', label: 'Cart', component: Cart },
     { id: 'how-to-order', label: 'How To Order', component: HowToOrder },
-    { id: 'about', label: 'About Us', component: AboutUs },
     { id: 'contact', label: 'Contact Us', component: ContactUs },
   ];
 
@@ -37,7 +35,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary">Body Product Inventory</h1>
+              <h1 className="text-2xl font-bold text-primary">Product Inventory</h1>
             </div>
             
             <nav className="hidden md:flex space-x-8 items-center">
@@ -85,8 +83,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
       <footer className="bg-gray-50 border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2025 Body Product Inventory. All rights reserved.</p>
-            <p className="mt-2 text-sm">Professional intermediary body product distribution</p>
+            <p>&copy; 2025 Body Product Inventory</p>
           </div>
         </div>
       </footer>

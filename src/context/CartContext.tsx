@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface CartItem {
   id: string;
   name: string;
+  type: string;
   size: string;
   msrp: number;
   itemNumber: string;
@@ -30,26 +31,29 @@ export const useCart = () => {
 };
 
 const getTieredPricing = (totalMSRP: number, totalUnits: number) => {
+  let estimatedTotal: number;
   let unitPrice: number;
   let message = "Estimated total confirmed.";
 
-  if (totalMSRP < 1000) {
-    unitPrice = 0;
-    message = "Minimum purchase of $1,000 not met. Please add more items to your cart.";
-  } else if (totalMSRP >= 1000 && totalMSRP < 3000) {
-    unitPrice = 3.95;
-  } else if (totalMSRP >= 3000 && totalMSRP < 5000) {
-    unitPrice = 3.25;
-  } else if (totalMSRP >= 5000 && totalMSRP < 10000) {
-    unitPrice = 2.80;
-  } else if (totalMSRP >= 10000) {
-    unitPrice = 2.40;
-  } else {
-    unitPrice = 0;
+  if (totalUnits < 250) {
+    estimatedTotal = totalMSRP; // No discount below 250 units
+    unitPrice = totalUnits > 0 ? totalMSRP / totalUnits : 0;
+    message = `Minimum purchase of 250 units not met. Please add ${250 - totalUnits} more units to your cart.`;
+  } else if (totalUnits >= 250 && totalUnits < 900) {
+    estimatedTotal = totalMSRP * 0.265; // 73.5% discount
+    unitPrice = estimatedTotal / totalUnits;
+  } else if (totalUnits >= 900 && totalUnits < 1800) {
+    estimatedTotal = totalMSRP * 0.22; // 78% discount
+    unitPrice = estimatedTotal / totalUnits;
+  } else if (totalUnits >= 1800 && totalUnits < 4000) {
+    estimatedTotal = totalMSRP * 0.19; // 81% discount
+    unitPrice = estimatedTotal / totalUnits;
+  } else { // totalUnits >= 4000
+    estimatedTotal = totalMSRP * 0.16; // 84% discount
+    unitPrice = estimatedTotal / totalUnits;
   }
 
-  const finalTotal = totalUnits * unitPrice;
-  return { unitPrice, finalTotal, message };
+  return { unitPrice, finalTotal: estimatedTotal, message };
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
