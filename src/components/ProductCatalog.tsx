@@ -213,11 +213,18 @@ const ProductCatalog = () => {
                   <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
                     {product.image_url ? (
                       <>
-                        <img
-                          src={currentImage[product.id] === 'back' ? `/product-images/${product.item_number}-B.jpg` : `/product-images/${product.item_number}.jpg`}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <a
+                          href={currentImage[product.id] === 'back' ? `/product-images/${product.item_number}-B.jpg` : `/product-images/${product.item_number}.jpg`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full h-full"
+                        >
+                          <img
+                            src={currentImage[product.id] === 'back' ? `/product-images/${product.item_number}-B.jpg` : `/product-images/${product.item_number}.jpg`}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </a>
                         <Button
                           variant="ghost"
                           size="icon"
