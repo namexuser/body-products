@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
     for (const item of cartItems) {
       const { error: inventoryError } = await supabaseClient
         .from('inventory')
-        .update({ quantity_in_stock: 'quantity_in_stock - ' + item.quantity })
+        .decrement('quantity_in_stock', item.quantity)
         .eq('product_id', item.product_id);
 
       if (inventoryError) {
