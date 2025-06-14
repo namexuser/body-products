@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Package, Plus, Minus, Info, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,9 +72,33 @@ const ProductCatalog = () => {
   const [currentImage, setCurrentImage] = useState<Record<string, 'front' | 'back'>>({});
   const { addToCart } = useCart();
 
+  const containerRef = useRef<HTMLDivElement>(null); // Ref for the main container
+
   useEffect(() => {
     fetchProducts(page);
   }, [page]); // Depend on page state
+
+  // Infinite scroll logic
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 200; // 200px buffer
+
+        if (isAtBottom && hasMore && !loading) {
+          setPage(prevPage => prevPage + 1);
+        }
+      }
+    };
+
+    // Attach scroll listener to the window or a specific element
+    // Attaching to window for simplicity, but could attach to containerRef.current
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [hasMore, loading]); // Depend on hasMore and loading states
 
   const fetchProducts = async (currentPage: number) => {
     setLoading(true);
@@ -159,10 +183,6 @@ const ProductCatalog = () => {
     }
   };
 
-  const handleLoadMore = () => {
-    setPage(prevPage => prevPage + 1);
-  };
-
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchesType = filters.productType === 'all' || (typeof product.product_type === 'string' && product.product_type.toLowerCase() === filters.productType);
@@ -235,7 +255,7 @@ const ProductCatalog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+    <div ref={containerRef} className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="text-center space-y-4">
@@ -454,16 +474,17 @@ const ProductCatalog = () => {
           </Card>
         )}
 
-        {/* Load More Button */}
-        {hasMore && (
+        {/* Loading indicator for infinite scroll */}
+        {loading && products.length > 0 && (
           <div className="flex justify-center mt-8">
-            <Button
-              onClick={handleLoadMore}
-              disabled={loading}
-            >
-              {loading ? 'Loading More...' : 'Load More'}
-            </Button>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        )}
+
+        {!hasMore && products.length > 0 && (
+           <div className="text-center text-muted-foreground mt-8">
+             You've reached the end of the catalog.
+           </div>
         )}
       </div>
     </div>
