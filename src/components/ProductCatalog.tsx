@@ -346,9 +346,9 @@ const ProductCatalog = () => {
                       <span className="text-foreground">{product.size}</span>
                     </div>
                     {product.scent && (
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium flex-shrink-0 text-muted-foreground">Fragrance Notes:</span>
-                        <span className="truncate overflow-hidden text-ellipsis min-w-0 text-foreground">{product.scent}</span>
+                      <div className="flex flex-col text-sm">
+                        <span className="font-medium text-muted-foreground mb-1">Fragrance Notes:</span>
+                        <span className="text-foreground">{product.scent}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
