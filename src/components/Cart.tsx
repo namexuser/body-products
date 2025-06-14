@@ -75,7 +75,13 @@ const Cart = () => {
         body: {
           customerInfo: clientInfo, // customerInfo now includes name, email, address
           cartItems: itemsForFunction, // Use the prepared items array
-          // Remove totals from the payload as the function calculates it
+          totals: { // Include totals object
+            totalMSRP: totalMSRP,
+            totalUnits: totalUnits,
+            estimatedTotal: estimatedTotal,
+            unitPrice: unitPrice,
+            discountPercentage: discountPercentage,
+          },
         }
       });
 

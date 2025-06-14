@@ -191,17 +191,21 @@ const handler = async (req: Request): Promise<Response> => {
 
 
     // Update total amount in the order
-    const { error: updateTotalError } = await supabaseClient
-      .from('orders')
-      .update({ total_amount: totals.estimatedTotal }) // Use estimatedTotal from frontend
-      .eq('id', orderData.id);
+    if (totals && typeof totals.estimatedTotal === 'number') {
+      const { error: updateTotalError } = await supabaseClient
+        .from('orders')
+        .update({ total_amount: totals.estimatedTotal }) // Use estimatedTotal from frontend
+        .eq('id', orderData.id);
 
-    if (updateTotalError) {
-      console.error('Error updating order total:', updateTotalError);
-      // Continue without throwing error, as order and items are already created
+      if (updateTotalError) {
+        console.error('Error updating order total:', updateTotalError);
+        // Continue without throwing error, as order and items are already created
+      }
+
+      console.log('Order total updated');
+    } else {
+      console.warn('Totals object or estimatedTotal is missing or invalid. Skipping order total update.');
     }
-
-    console.log('Order total updated');
 
     // Fetch order items with product details for email
     const { data: orderItemsWithDetails, error: fetchItemsError } = await supabaseClient
@@ -279,13 +283,13 @@ const handler = async (req: Request): Promise<Response> => {
 
         <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
-          <p><strong>Total Units:</strong> ${totals.totalUnits}</p>
-          <p><strong>Total MSRP:</strong> $${totals.totalMSRP.toFixed(2)}</p>
-          <p><strong>Discount:</strong> ${totals.discountPercentage.toFixed(1)}%</p>
-          <p><strong>Discounted Unit Price:</strong> $${totals.unitPrice.toFixed(2)}</p>
-          <p style="font-size: 18px; color: #2d5016;"><strong>Estimated Total: $${totals.estimatedTotal.toFixed(
-            2
-          )}</strong></p>
+          <p><strong>Total Units:</strong> ${totals?.totalUnits ?? 'N/A'}</p>
+          <p><strong>Total MSRP:</strong> $${totals?.totalMSRP?.toFixed(2) ?? '0.00'}</p>
+          <p><strong>Discount:</strong> ${totals?.discountPercentage?.toFixed(1) ?? '0.0'}%</p>
+          <p><strong>Discounted Unit Price:</strong> $${totals?.unitPrice?.toFixed(2) ?? '0.00'}</p>
+          <p style="font-size: 18px; color: #2d5016;"><strong>Estimated Total: $${totals?.estimatedTotal?.toFixed(
+          2
+        ) ?? '0.00'}</strong></p>
         </div>
 
         <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
