@@ -12,12 +12,20 @@ interface PurchaseOrderRequest {
   customerInfo: {
     name: string;
     email: string;
-    address: string; // Use address field from our schema
+    city: string;
+    phone: string;
   };
   cartItems: Array<{
     product_id: string; // Use product_id from our schema
     quantity: number;
   }>;
+  totals: {
+    totalMSRP: number;
+    totalUnits: number;
+    estimatedTotal: number;
+    unitPrice: number;
+    discountPercentage: number;
+  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -33,14 +41,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    const { customerInfo, cartItems }: PurchaseOrderRequest = await req.json();
+    const { customerInfo, cartItems, totals }: PurchaseOrderRequest = await req.json();
 
     // Basic validation for customer info
-    if (!customerInfo || !customerInfo.name || !customerInfo.email || !customerInfo.address) {
+    if (!customerInfo || !customerInfo.name || !customerInfo.email || !customerInfo.city || !customerInfo.phone) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing required customer information (name, email, or address)',
+          error: 'Missing required customer information (name, email, city, or phone)',
         }),
         {
           status: 400,
@@ -64,12 +72,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Basic address validation (non-empty)
-    if (!customerInfo.address || customerInfo.address.trim() === '') {
+    // Basic city and phone validation (non-empty)
+    if (!customerInfo.city || customerInfo.city.trim() === '' || !customerInfo.phone || customerInfo.phone.trim() === '') {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Address field is required',
+          error: 'City and Phone fields are required',
         }),
         {
           status: 400,
@@ -139,7 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
       .insert({
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
-        customer_address: customerInfo.address, // Use address field
+        customer_city: customerInfo.city,
+        customer_phone: customerInfo.phone,
         total_amount: 0, // Calculate total amount later
         status: 'pending',
       })
@@ -153,16 +162,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Order created:', orderData.id);
 
-    // Create order items and calculate total amount
-    let totalAmount = 0;
+    // Create order items
     const orderItemsToInsert = cartItems.map(item => {
       const product = products?.find(p => p.id === item.product_id);
       if (!product) {
         throw new Error(`Product with ID ${item.product_id} not found.`);
       }
       const itemPrice = product.price;
-      const subtotal = itemPrice * item.quantity;
-      totalAmount += subtotal;
 
       return {
         order_id: orderData.id,
@@ -213,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Update total amount in the order
     const { error: updateTotalError } = await supabaseClient
       .from('orders')
-      .update({ total_amount: totalAmount })
+      .update({ total_amount: totals.estimatedTotal }) // Use estimatedTotal from frontend
       .eq('id', orderData.id);
 
     if (updateTotalError) {
@@ -276,7 +282,8 @@ const handler = async (req: Request): Promise<Response> => {
           <p><strong>Order ID:</strong> ${orderData.id}</p>
           <p><strong>Customer:</strong> ${customerInfo.name}</p>
           <p><strong>Email:</strong> ${customerInfo.email}</p>
-          <p><strong>Address:</strong> ${customerInfo.address}</p>
+          <p><strong>City:</strong> ${customerInfo.city}</p>
+          <p><strong>Phone:</strong> ${customerInfo.phone}</p>
           <p><strong>Order Date:</strong> ${new Date(orderData.order_date).toLocaleString()}</p>
         </div>
 
@@ -287,7 +294,7 @@ const handler = async (req: Request): Promise<Response> => {
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">SKU</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Qty</th>
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Price</th>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">MSRP</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Subtotal</th>
             </tr>
           </thead>
@@ -298,7 +305,11 @@ const handler = async (req: Request): Promise<Response> => {
 
         <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
-          <p style="font-size: 18px; color: #2d5016;"><strong>Total Amount: $${totalAmount.toFixed(
+          <p><strong>Total Units:</strong> ${totals.totalUnits}</p>
+          <p><strong>Total MSRP:</strong> $${totals.totalMSRP.toFixed(2)}</p>
+          <p><strong>Discount:</strong> ${totals.discountPercentage.toFixed(1)}%</p>
+          <p><strong>Discounted Unit Price:</strong> $${totals.unitPrice.toFixed(2)}</p>
+          <p style="font-size: 18px; color: #2d5016;"><strong>Estimated Total: $${totals.estimatedTotal.toFixed(
             2
           )}</strong></p>
         </div>
@@ -309,15 +320,15 @@ const handler = async (req: Request): Promise<Response> => {
 
         <p style="text-align: center; color: #666; margin-top: 30px;">
           Thank you for your business!<br>
-          <strong>Body Product Inventory Team</strong>
+          <strong>offprice.pro</strong>
         </p>
       </div>
     `;
 
     // Send email to customer and client
     const emailResponse = await resend.emails.send({
-      from: 'Body Products <ask@offprice.pro>',
-      to: [customerInfo.email, '012009@gmail.com'], // Send to both customer and client
+      from: 'Off-Price <ask@offprice.pro>',
+      to: [customerInfo.email, 'ask@offprice.pro'], // Send to both customer and client
       subject: `Purchase Order Confirmation - Order ID: ${orderData.id}`,
       html: emailHtml,
     });
