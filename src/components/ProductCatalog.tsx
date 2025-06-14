@@ -10,6 +10,49 @@ import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+// Add the map here
+const skuCaseQuantities: Record<string, number> = {
+  "667559299899": 12,
+  "667659313242": 12,
+  "667559299882": 12,
+  "667559299820": 18,
+  "667559282563": 12,
+  "667559282501": 18,
+  "667659311231": 18,
+  "667559282440": 24,
+  "667659322251": 12,
+  "667659330638": 12,
+  "667659330645": 12,
+  "667559282662": 18,
+  "667659330652": 12,
+  "667559299363": 24,
+  "667559299875": 12,
+  "667558216231": 24,
+  "667559299950": 18,
+  "667659320462": 12,
+  "667558216255": 24,
+  "667559279969": 12,
+  "667559265665": 12,
+  "667559288381": 24,
+  "667559299370": 24,
+  "667559299837": 18,
+  "667659322282": 24,
+  "667559294504": 24,
+  "667559279211": 36,
+  "667559294542": 36,
+  "667559272496": 36,
+  "667659311279": 21,
+  "667559299936": 18,
+  "667559299813": 18,
+  "667558216248": 24,
+  "667559139690": 35,
+  "667559261148": 18,
+  "667559261124": 12,
+  "667559281627": 24,
+  "667559281665": 12,
+  "667559273059": 40,
+};
+
 // Interface for the data returned directly from the Supabase query
 // Adjusted based on typical Supabase join results
 interface SelectQueryError<T extends string = string> {
@@ -36,7 +79,8 @@ interface DisplayProduct {
   scent: string | null;
   ingredients: string[] | null;
   msrp: number;
-  quantity: number; // Flattened quantity from inventory
+  quantity: number; // Total units in stock
+  caseQuantity: number; // Units per case
 }
 
 
@@ -126,6 +170,7 @@ const ProductCatalog = () => {
         // Map the fetched product data and merge with inventory
         const productsWithInventory: DisplayProduct[] = productsData.map((product) => {
           const quantity = inventoryMap.get(product.id) || 0; // Get quantity from map, default to 0
+          const caseQuantity = skuCaseQuantities[product.sku] || 1; // Get case quantity from map, default to 1
 
           // Log product details for debugging missing images
           if (product.sku === '0667659330638' || product.sku === '0667559288381') {
@@ -152,12 +197,19 @@ const ProductCatalog = () => {
             scent: product.scent,
             ingredients: product.ingredients,
             msrp: product.msrp,
-            quantity: quantity,
+            quantity: quantity, // Total units
+            caseQuantity: caseQuantity, // Units per case
           };
         });
 
         // Set products to the fetched list (no appending needed for full load)
         setProducts(productsWithInventory);
+        // Initialize quantities state with the case quantity for each product
+        const initialQuantities: Record<string, number> = {};
+        productsWithInventory.forEach(product => {
+            initialQuantities[product.id] = product.caseQuantity; // Default to one case
+        });
+        setQuantities(initialQuantities);
 
       } else {
         // If no data is returned, set products to empty array
@@ -207,15 +259,34 @@ const ProductCatalog = () => {
       msrp: product.msrp,
     }, quantity);
 
-    toast.success(`Added ${quantity} x ${product.name} to cart`);
-    setQuantities(prev => ({ ...prev, [product.id]: 1 })); // Reset to 1 after adding
+    toast.success(`Added ${quantity} units of ${product.name} to cart`);
+    setQuantities(prev => ({ ...prev, [product.id]: product.caseQuantity })); // Reset to 1 case after adding
   };
 
-  const updateQuantity = (productId: string, change: number) => {
+  const updateQuantity = (productId: string, changeInCases: number) => {
     setQuantities(prev => {
-      const currentQty = prev[productId] || 1; // Default to 1
-      const newQty = Math.max(1, currentQty + change); // Ensure minimum of 1
-      return { ...prev, [productId]: newQty };
+      const product = products.find(p => p.id === productId);
+      if (!product) return prev;
+
+      const currentQtyUnits = prev[productId] || product.caseQuantity; // Default to one case in units
+      let newQtyUnits = currentQtyUnits + (changeInCases * product.caseQuantity); // Change is in units
+
+      // Ensure quantity is a multiple of caseQuantity
+      newQtyUnits = Math.max(product.caseQuantity, Math.floor(newQtyUnits / product.caseQuantity) * product.caseQuantity);
+
+      // Ensure quantity does not exceed available stock
+      newQtyUnits = Math.min(newQtyUnits, product.quantity);
+
+      // Enforce minimum order of 250 units, but allow adding in case quantities
+      if (newQtyUnits < 250 && newQtyUnits !== product.caseQuantity) {
+         // If the new quantity is less than 250 and not exactly one case,
+         // snap it to the nearest multiple of caseQuantity that is >= 250,
+         // or set to one case if that's the only valid option below 250.
+         const minOrderMultiple = Math.ceil(250 / product.caseQuantity) * product.caseQuantity;
+         newQtyUnits = Math.max(minOrderMultiple, newQtyUnits);
+      }
+
+      return { ...prev, [productId]: newQtyUnits };
     });
   };
 
@@ -361,7 +432,7 @@ const ProductCatalog = () => {
                     <div className="flex justify-between items-center text-sm">
                       <span className="font-medium text-muted-foreground">Available:</span>
                       <span className="text-foreground">{product.quantity} units</span>
-                      {product.quantity > 0 && product.quantity <= 100 && (
+                      {product.quantity > 0 && product.quantity <= (product.caseQuantity * 5) && ( // Low stock if less than 5 cases
                         <Badge variant="destructive" className="ml-2">Low Stock</Badge>
                       )}
                     </div>
@@ -406,21 +477,23 @@ const ProductCatalog = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => updateQuantity(product.id, -250)}
+                        onClick={() => updateQuantity(product.id, -1)} // Decrement by 1 case
                         className="h-9 w-9"
-                        disabled={product.quantity === 0 || (quantities[product.id] || 250) <= 250}
+                        disabled={product.quantity === 0 || (quantities[product.id] || product.caseQuantity) <= product.caseQuantity} // Disable if quantity is 0 or already at minimum (1 case)
                       >
                         <Minus size={16} />
                       </Button>
                       <Input
                         type="number"
-                        min="1"
-                        value={quantities[product.id] || 1}
+                        min={product.caseQuantity} // Minimum is one case
+                        step={product.caseQuantity} // Step is one case
+                        value={quantities[product.id] || product.caseQuantity} // Default to one case
                         onChange={(e) => {
                           const value = parseInt(e.target.value);
+                          const newQty = Math.max(product.caseQuantity, isNaN(value) ? product.caseQuantity : Math.floor(value / product.caseQuantity) * product.caseQuantity); // Ensure multiple of caseQuantity and minimum of one case
                           setQuantities(prev => ({
                             ...prev,
-                            [product.id]: Math.max(1, isNaN(value) ? 1 : value)
+                            [product.id]: Math.min(newQty, product.quantity) // Ensure not more than available stock
                           }));
                         }}
                         className="w-full sm:w-24 text-center h-9"
@@ -429,9 +502,9 @@ const ProductCatalog = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => updateQuantity(product.id, 1)}
+                        onClick={() => updateQuantity(product.id, 1)} // Increment by 1 case
                         className="h-9 w-9"
-                        disabled={product.quantity === 0}
+                        disabled={product.quantity === 0 || (quantities[product.id] || product.caseQuantity) + product.caseQuantity > product.quantity} // Disable if quantity is 0 or adding another case exceeds stock
                       >
                         <Plus size={16} />
                       </Button>
@@ -444,7 +517,7 @@ const ProductCatalog = () => {
                       disabled={product.quantity === 0}
                     >
                       <Plus size={16} className="mr-2" />
-                      Add to Cart ({quantities[product.id] || 1} units)
+                      Add to Cart ({quantities[product.id] || product.caseQuantity} units)
                     </Button>
                   </div>
                 </CardContent>
