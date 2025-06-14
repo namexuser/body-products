@@ -61,9 +61,6 @@ interface RawFetchedProduct {
 const ProductCatalog = () => {
   const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0); // 0-indexed page number
-  const [itemsPerPage] = useState(12); // Number of items per page
-  const [hasMore, setHasMore] = useState(true); // To check if there are more products to load
   const [filters, setFilters] = useState({
     productType: 'all'
   });
@@ -75,43 +72,19 @@ const ProductCatalog = () => {
   const containerRef = useRef<HTMLDivElement>(null); // Ref for the main container
 
   useEffect(() => {
-    fetchProducts(page);
-  }, [page]); // Depend on page state
+    fetchProducts();
+  }, []); // Fetch all products on initial load
 
-  // Infinite scroll logic
-  useEffect(() => {
-    const handleScroll = () => {
-      if (containerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 200; // 200px buffer
 
-        if (isAtBottom && hasMore && !loading) {
-          setPage(prevPage => prevPage + 1);
-        }
-      }
-    };
-
-    // Attach scroll listener to the window or a specific element
-    // Attaching to window for simplicity, but could attach to containerRef.current
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [hasMore, loading]); // Depend on hasMore and loading states
-
-  const fetchProducts = async (currentPage: number) => {
+  const fetchProducts = async () => {
     setLoading(true);
-    const from = currentPage * itemsPerPage;
-    const to = from + itemsPerPage - 1;
 
     try {
-      // Fetch products with pagination
+      // Fetch all products
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id, name, description, image_url, sku, product_type, size, scent, ingredients, msrp')
-        .order('name')
-        .range(from, to);
+        .order('name');
 
       if (productsError) {
         console.error('Error fetching products:', productsError);
@@ -121,8 +94,6 @@ const ProductCatalog = () => {
       }
 
       // Fetch inventory data separately
-      // Note: For large inventories, fetching all inventory data might still be a bottleneck.
-      // A more advanced approach would involve fetching inventory only for the products on the current page.
       const { data: inventoryData, error: inventoryError } = await supabase
         .from('inventory')
         .select('product_id, quantity_in_stock');
@@ -149,6 +120,20 @@ const ProductCatalog = () => {
         const productsWithInventory: DisplayProduct[] = productsData.map((product) => {
           const quantity = inventoryMap.get(product.id) || 0; // Get quantity from map, default to 0
 
+          // Log product details for debugging missing images
+          if (product.sku === '0667659330638' || product.sku === '0667559288381') {
+            console.log(`Debugging image for SKU ${product.sku}:`, {
+              productName: product.name,
+              sku: product.sku,
+              image_url_from_db: product.image_url,
+              constructed_front_url: `/product-images/${product.sku}.png`,
+              constructed_back_url: `/product-images/${product.sku}-B.png`,
+              has_image_url_in_db: !!product.image_url,
+              quantity: quantity,
+            });
+          }
+
+
           return {
             id: product.id,
             name: product.name,
@@ -164,20 +149,17 @@ const ProductCatalog = () => {
           };
         });
 
-        // Append new products to the existing list
-        setProducts(prevProducts => [...prevProducts, ...productsWithInventory]);
-
-        // Check if there are more products to load
-        setHasMore(productsData.length === itemsPerPage);
+        // Set products to the fetched list (no appending needed for full load)
+        setProducts(productsWithInventory);
 
       } else {
-        // If no data is returned, there are no more products
-        setHasMore(false);
+        // If no data is returned, set products to empty array
+        setProducts([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
-      setHasMore(false); // Assume no more data on error
+      setProducts([]); // Set products to empty array on error
     } finally {
       setLoading(false);
     }
@@ -204,7 +186,7 @@ const ProductCatalog = () => {
 
 
   const handleAddToCart = (product: DisplayProduct) => {
-    const quantity = quantities[product.id] || 250; // Default to 250 units
+    const quantity = quantities[product.id] || 1; // Default to 1 unit
     addToCart({
       id: product.id,
       name: product.name,
@@ -219,13 +201,13 @@ const ProductCatalog = () => {
     }, quantity);
 
     toast.success(`Added ${quantity} x ${product.name} to cart`);
-    setQuantities(prev => ({ ...prev, [product.id]: 250 })); // Reset to 250 after adding
+    setQuantities(prev => ({ ...prev, [product.id]: 1 })); // Reset to 1 after adding
   };
 
   const updateQuantity = (productId: string, change: number) => {
     setQuantities(prev => {
-      const currentQty = prev[productId] || 250; // Default to 250
-      const newQty = Math.max(250, currentQty + change); // Ensure minimum of 250
+      const currentQty = prev[productId] || 1; // Default to 1
+      const newQty = Math.max(1, currentQty + change); // Ensure minimum of 1
       return { ...prev, [productId]: newQty };
     });
   };
@@ -422,13 +404,13 @@ const ProductCatalog = () => {
                       </Button>
                       <Input
                         type="number"
-                        min="250"
-                        value={quantities[product.id] || 250}
+                        min="1"
+                        value={quantities[product.id] || 1}
                         onChange={(e) => {
                           const value = parseInt(e.target.value);
                           setQuantities(prev => ({
                             ...prev,
-                            [product.id]: Math.max(250, isNaN(value) ? 250 : value)
+                            [product.id]: Math.max(1, isNaN(value) ? 1 : value)
                           }));
                         }}
                         className="w-full sm:w-24 text-center h-9"
@@ -437,7 +419,7 @@ const ProductCatalog = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => updateQuantity(product.id, 250)}
+                        onClick={() => updateQuantity(product.id, 1)}
                         className="h-9 w-9"
                         disabled={product.quantity === 0}
                       >
@@ -452,7 +434,7 @@ const ProductCatalog = () => {
                       disabled={product.quantity === 0}
                     >
                       <Plus size={16} className="mr-2" />
-                      Add to Cart ({quantities[product.id] || 250} units)
+                      Add to Cart ({quantities[product.id] || 1} units)
                     </Button>
                   </div>
                 </CardContent>
@@ -475,17 +457,6 @@ const ProductCatalog = () => {
         )}
 
         {/* Loading indicator for infinite scroll */}
-        {loading && products.length > 0 && (
-          <div className="flex justify-center mt-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        )}
-
-        {!hasMore && products.length > 0 && (
-           <div className="text-center text-muted-foreground mt-8">
-             You've reached the end of the catalog.
-           </div>
-        )}
       </div>
     </div>
   );
