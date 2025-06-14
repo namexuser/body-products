@@ -34,7 +34,8 @@ CREATE TABLE orders (
     customer_id UUID REFERENCES customers(id) ON DELETE SET NULL, -- Optional link to customers table
     customer_name VARCHAR(255),
     customer_email VARCHAR(255) NOT NULL,
-    customer_address TEXT,
+    customer_city VARCHAR(255),
+    customer_phone VARCHAR(255),
     order_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     total_amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'pending' -- e.g., 'pending', 'processing', 'completed', 'cancelled'

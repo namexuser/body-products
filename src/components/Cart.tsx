@@ -8,6 +8,15 @@ import { useCart } from "../context/CartContext";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 
+// Helper function to format numbers with comma separators and fixed decimal places for currency
+const formatCurrency = (amount: number) => {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Helper function to format numbers with comma separators
+const formatNumber = (num: number) => {
+  return num.toLocaleString();
+};
 // Simple email validation regex
 const validateEmail = (email: string): boolean => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,7 +28,8 @@ const Cart = () => {
   const [clientInfo, setClientInfo] = useState({
     name: '',
     email: '',
-    address: '' // Updated to use address
+    city: '',
+    phone: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +50,7 @@ const Cart = () => {
     }
  
     // Updated validation for required fields
-    if (!clientInfo.name || !clientInfo.email || !clientInfo.address) {
+    if (!clientInfo.name || !clientInfo.email || !clientInfo.city || !clientInfo.phone) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -77,7 +87,7 @@ const Cart = () => {
       // Updated success message to use orderId
       if (data?.success) {
         toast.success(`Purchase order (ID: ${data.orderId}) submitted successfully! Confirmation email sent.`);
-        setClientInfo({ name: '', email: '', address: '' }); // Clear address field
+        setClientInfo({ name: '', email: '', city: '', phone: '' }); // Clear city and phone fields
         clearCart();
       } else {
         throw new Error(data?.error || 'Failed to submit order');
@@ -170,12 +180,12 @@ const Cart = () => {
         <CardContent className="space-y-4">
           <div className="flex justify-between">
             <span>Total Units:</span>
-            <span className="font-medium">{totalUnits}</span>
+            <span className="font-medium">{formatNumber(totalUnits)}</span>
           </div>
 
           <div className="flex justify-between">
             <span>Total MSRP (before discount):</span>
-            <span className="font-medium line-through">${totalMSRP.toFixed(2)}</span>
+            <span className="font-medium line-through">${formatCurrency(totalMSRP)}</span>
           </div>
 
           <div className="flex justify-between">
@@ -190,14 +200,14 @@ const Cart = () => {
           <div className="flex justify-between">
             <span>Discounted Unit Price:</span>
             <span className="font-medium">
-              {unitPrice > 0 ? `$${unitPrice.toFixed(2)}` : 'N/A'}
+              {unitPrice > 0 ? `$${formatCurrency(unitPrice)}` : 'N/A'}
             </span>
           </div>
 
           <div className="flex justify-between text-lg font-bold">
             <span>Discounted Order Total:</span>
             <span className="text-primary">
-              {estimatedTotal > 0 ? `$${estimatedTotal.toFixed(2)}` : 'N/A'}
+              {estimatedTotal > 0 ? `$${formatCurrency(estimatedTotal)}` : 'N/A'}
             </span>
           </div>
 
@@ -237,14 +247,25 @@ const Cart = () => {
                 />
               </div>
 
-              {/* Updated input for Address */}
-              <div className="md:col-span-2"> {/* Span across two columns on medium screens and up */}
-                <label className="block text-sm font-medium mb-2">Address *</label>
+              {/* Input for City */}
+              <div>
+                <label className="block text-sm font-medium mb-2">City *</label>
                 <Input
                   required
-                  value={clientInfo.address}
-                  onChange={(e) => setClientInfo(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Your full address"
+                  value={clientInfo.city}
+                  onChange={(e) => setClientInfo(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="Your city"
+                />
+              </div>
+
+              {/* Input for Phone Number */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Phone Number *</label>
+                <Input
+                  required
+                  value={clientInfo.phone}
+                  onChange={(e) => setClientInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Your phone number"
                 />
               </div>
 
