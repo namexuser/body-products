@@ -42,7 +42,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary">Product Inventory</h1>
+              <h1 className="text-2xl font-bold text-primary">Off-Price Pro</h1>
             </div>
             
             <nav className="hidden md:flex space-x-8 items-center">
@@ -116,7 +116,7 @@ const AppContent = ({ currentSection, setCurrentSection, sections }) => {
       <footer className="bg-gray-50 border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2025 Body Product Inventory</p>
+            <p>&copy; 2025 Off-Price Pro</p>
           </div>
         </div>
       </footer>

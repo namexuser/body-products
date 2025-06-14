@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client'; // Import supabase client
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -18,7 +18,7 @@ const ContactUs = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.subject || !formData.message) {
       toast.error('Please fill in all required fields');
       return;
@@ -27,13 +27,25 @@ const ContactUs = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success('Message sent successfully! We will get back to you within 24 hours.');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (error) {
-      toast.error('Failed to send message. Please try again.');
+      // Call the submit-contact-form Edge Function
+      const { data, error } = await supabase.functions.invoke('submit-contact-form', {
+        body: formData, // Send form data as the body
+      });
+
+      if (error) {
+        console.error('Error submitting contact form:', error);
+        throw new Error(error.message || 'Failed to send message');
+      }
+
+      if (data?.success) {
+        toast.success('Message sent successfully! We will get back to you within 24 hours.');
+        setFormData({ name: '', email: '', subject: '', message: '' }); // Clear form on success
+      } else {
+        throw new Error(data?.error || 'Failed to send message');
+      }
+    } catch (error: unknown) {
+      console.error('Error submitting contact form:', error);
+      toast.error((error instanceof Error ? error.message : 'Unknown error') || 'Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +104,7 @@ const ContactUs = () => {
                   placeholder="Your full name"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Email *</label>
                 <Input
@@ -103,7 +115,7 @@ const ContactUs = () => {
                   placeholder="your@email.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Subject *</label>
                 <Input
@@ -113,7 +125,7 @@ const ContactUs = () => {
                   placeholder="What's this about?"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Message *</label>
                 <Textarea
@@ -124,7 +136,7 @@ const ContactUs = () => {
                   rows={6}
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 disabled={isSubmitting}
@@ -166,12 +178,12 @@ const ContactUs = () => {
                   <h4 className="font-semibold mb-2">What is the minimum order amount?</h4>
                   <p className="text-sm text-muted-foreground">Our minimum order requirement is 250 Units.</p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-semibold mb-2">How long does order processing take?</h4>
                   <p className="text-sm text-muted-foreground">Orders are typically processed within 2-5 business days. Same day delivery is available.</p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-semibold mb-2">Do you ship internationally?</h4>
                   <p className="text-sm text-muted-foreground">Contact us for international shipping inquiries.</p>

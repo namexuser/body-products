@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { useCart } from '../context/CartContext';
-import { toast } from 'sonner';
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useCart } from "../context/CartContext";
+import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 
 const Cart = () => {
@@ -14,8 +13,7 @@ const Cart = () => {
   const [clientInfo, setClientInfo] = useState({
     name: '',
     email: '',
-    phone: '',
-    city: ''
+    address: '' // Updated to use address
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,13 +27,14 @@ const Cart = () => {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!canSubmitOrder) {
       toast.error('Minimum purchase requirement of 250 units and $1,000 after discounts not met');
       return;
     }
 
-    if (!clientInfo.name || !clientInfo.email || !clientInfo.phone || !clientInfo.city) {
+    // Updated validation for required fields
+    if (!clientInfo.name || !clientInfo.email || !clientInfo.address) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -44,17 +43,18 @@ const Cart = () => {
 
     try {
       console.log('Submitting purchase order...');
-      
+
+      // Prepare cart items for the Edge Function payload
+      const itemsForFunction = cartItems.map(item => ({
+        product_id: item.id, // Use product_id
+        quantity: item.quantity,
+      }));
+
       const { data, error } = await supabase.functions.invoke('submit-purchase-order', {
         body: {
-          customerInfo: clientInfo,
-          cartItems: cartItems,
-          totals: {
-            totalMSRP,
-            totalUnits,
-            unitPrice,
-            estimatedTotal
-          }
+          customerInfo: clientInfo, // customerInfo now includes name, email, address
+          cartItems: itemsForFunction, // Use the prepared items array
+          // Remove totals from the payload as the function calculates it
         }
       });
 
@@ -63,9 +63,10 @@ const Cart = () => {
         throw new Error(error.message || 'Failed to submit order');
       }
 
+      // Updated success message to use orderId
       if (data?.success) {
-        toast.success(`Purchase order ${data.orderNumber} submitted successfully! Confirmation email sent.`);
-        setClientInfo({ name: '', email: '', phone: '', city: '' });
+        toast.success(`Purchase order (ID: ${data.orderId}) submitted successfully! Confirmation email sent.`);
+        setClientInfo({ name: '', email: '', address: '' }); // Clear address field
         clearCart();
       } else {
         throw new Error(data?.error || 'Failed to submit order');
@@ -105,17 +106,19 @@ const Cart = () => {
             {cartItems.map(item => (
               <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 border rounded-lg">
                 <div className="flex-1 w-full sm:w-auto">
-                  <h4 className="font-medium">{item.name} ({item.type})</h4>
-                  <p className="text-sm text-muted-foreground">SKU: {item.itemNumber} • Size: {item.size}</p>
+                  {/* Display product name and SKU from cart item */}
+                  <h4 className="font-medium">{item.name}</h4>
+                  <p className="text-sm text-muted-foreground">SKU: {item.sku}</p> {/* Use item.sku */}
                 </div>
-                
+
                 <div className="text-left sm:text-right w-full sm:w-auto">
-                  <p className="font-medium">${item.msrp.toFixed(2)} each</p>
+                  {/* Use item.msrp for price */}
+                  <p className="font-medium line-through">${item.msrp.toFixed(2)} each</p>
                   <p className="text-sm text-muted-foreground">
                     Subtotal: ${(item.msrp * item.quantity).toFixed(2)}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-start">
                   <Button
                     variant="outline"
@@ -133,7 +136,7 @@ const Cart = () => {
                     <Plus size={16} />
                   </Button>
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -158,29 +161,29 @@ const Cart = () => {
             <span>Total Units:</span>
             <span className="font-medium">{totalUnits}</span>
           </div>
-          
+
           <div className="flex justify-between">
             <span>Total MSRP (before discount):</span>
-            <span className="font-medium">${totalMSRP.toFixed(2)}</span>
+            <span className="font-medium line-through">${totalMSRP.toFixed(2)}</span>
           </div>
-          
+
           <Separator />
-          
+
           <div className="flex justify-between">
             <span>Discounted Unit Price:</span>
             <span className="font-medium">
               {unitPrice > 0 ? `$${unitPrice.toFixed(2)}` : 'N/A'}
             </span>
           </div>
-          
+
           <div className="flex justify-between text-lg font-bold">
             <span>Discounted Order Total:</span>
             <span className="text-primary">
               {estimatedTotal > 0 ? `$${estimatedTotal.toFixed(2)}` : 'N/A'}
             </span>
           </div>
-          
-          
+
+
           <p className="text-xs text-muted-foreground text-center">
             Final pricing subject to confirmation after order submission
           </p>
@@ -204,7 +207,7 @@ const Cart = () => {
                   placeholder="Your full name"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">Email *</label>
                 <Input
@@ -215,29 +218,21 @@ const Cart = () => {
                   placeholder="your@email.com"
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Phone *</label>
-                <Input
-                  type="tel"
-                  required
-                  value={clientInfo.phone}
-                  onChange={(e) => setClientInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">City *</label>
+
+              {/* Updated input for Address */}
+              <div className="md:col-span-2"> {/* Span across two columns on medium screens and up */}
+                <label className="block text-sm font-medium mb-2">Address *</label>
                 <Input
                   required
-                  value={clientInfo.city}
-                  onChange={(e) => setClientInfo(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Your city"
+                  value={clientInfo.address}
+                  onChange={(e) => setClientInfo(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Your full address"
                 />
               </div>
+
+              {/* Removed Phone and City inputs */}
             </div>
-            
+
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Button
                 type="submit"
@@ -246,7 +241,7 @@ const Cart = () => {
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Purchase Order'}
               </Button>
-              
+
               <Button
                 type="button"
                 variant="outline"

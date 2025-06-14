@@ -22,11 +22,10 @@ export type Database = {
           msrp: number
           name: string
           product_type: string
-          quantity: number | null
           scent: string | null
           size: string
           updated_at: string
-          sku: string | null // Added sku
+          sku: string | null
         }
         Insert: {
           created_at?: string
@@ -40,11 +39,10 @@ export type Database = {
           msrp: number
           name: string
           product_type: string
-          quantity?: number | null
           scent?: string | null
           size: string
           updated_at?: string
-          sku?: string | null // Added sku
+          sku?: string | null
         }
         Update: {
           created_at?: string
@@ -58,11 +56,10 @@ export type Database = {
           msrp?: number
           name?: string
           product_type?: string
-          quantity?: number | null
           scent?: string | null
           size?: string
           updated_at?: string
-          sku?: string | null // Added sku
+          sku?: string | null
         }
         Relationships: []
       }

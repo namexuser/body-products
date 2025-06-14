@@ -4,11 +4,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface CartItem {
   id: string;
   name: string;
-  type: string;
-  size: string;
-  msrp: number;
-  itemNumber: string;
+  description: string | null;
+  image_url: string | null;
+  sku: string;
   quantity: number;
+  product_type: string;
+  size: string;
+  scent: string | null;
+  ingredients: string[] | null;
+  msrp: number;
 }
 
 interface CartContextType {

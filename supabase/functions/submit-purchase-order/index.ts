@@ -1,4 +1,4 @@
-import { serve } from 'https://esm.sh/v118/deno.land/std@0.190.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'https://esm.sh/resend@2.0.0';
 
@@ -12,23 +12,12 @@ interface PurchaseOrderRequest {
   customerInfo: {
     name: string;
     email: string;
-    phone: string;
-    city: string;
+    address: string; // Use address field from our schema
   };
   cartItems: Array<{
-    id: string;
-    name: string;
-    size: string;
-    msrp: number;
-    itemNumber: string;
+    product_id: string; // Use product_id from our schema
     quantity: number;
   }>;
-  totals: {
-    totalMSRP: number;
-    totalUnits: number;
-    unitPrice: number;
-    estimatedTotal: number;
-  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -44,49 +33,64 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    const { customerInfo, cartItems, totals }: PurchaseOrderRequest =
-      await req.json();
+    const { customerInfo, cartItems }: PurchaseOrderRequest = await req.json();
 
     console.log('Processing purchase order for:', customerInfo.email);
 
-    // Create purchase order
+    // Fetch product details for items in the cart
+    const productIds = cartItems.map(item => item.product_id);
+    const { data: products, error: productsError } = await supabaseClient
+      .from('products')
+      .select('id, name, price, sku') // Select necessary fields
+      .in('id', productIds);
+
+    if (productsError) {
+      console.error('Error fetching product details:', productsError);
+      throw new Error(`Failed to fetch product details: ${productsError.message}`);
+    }
+
+    // Create order
     const { data: orderData, error: orderError } = await supabaseClient
-      .from('purchase_orders')
+      .from('orders') // Use the 'orders' table
       .insert({
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
-        customer_phone: customerInfo.phone,
-        customer_city: customerInfo.city,
-        total_msrp: totals.totalMSRP,
-        total_units: totals.totalUnits,
-        unit_price: totals.unitPrice,
-        estimated_total: totals.estimatedTotal,
+        customer_address: customerInfo.address, // Use address field
+        total_amount: 0, // Calculate total amount later
         status: 'pending',
       })
       .select()
       .single();
 
     if (orderError) {
-      console.error('Error creating purchase order:', orderError);
-      throw new Error(`Failed to create purchase order: ${orderError.message}`);
+      console.error('Error creating order:', orderError);
+      throw new Error(`Failed to create order: ${orderError.message}`);
     }
 
-    console.log('Purchase order created:', orderData.id);
+    console.log('Order created:', orderData.id);
 
-    // Create order items
-    const orderItems = cartItems.map((item) => ({
-      purchase_order_id: orderData.id,
-      product_name: item.name,
-      product_size: item.size,
-      item_number: item.itemNumber,
-      msrp: item.msrp,
-      quantity: item.quantity,
-      subtotal: item.msrp * item.quantity,
-    }));
+    // Create order items and calculate total amount
+    let totalAmount = 0;
+    const orderItemsToInsert = cartItems.map(item => {
+      const product = products?.find(p => p.id === item.product_id);
+      if (!product) {
+        throw new Error(`Product with ID ${item.product_id} not found.`);
+      }
+      const itemPrice = product.price;
+      const subtotal = itemPrice * item.quantity;
+      totalAmount += subtotal;
+
+      return {
+        order_id: orderData.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price_at_purchase: itemPrice,
+      };
+    });
 
     const { error: itemsError } = await supabaseClient
-      .from('purchase_order_items')
-      .insert(orderItems);
+      .from('order_items') // Use the 'order_items' table
+      .insert(orderItemsToInsert);
 
     if (itemsError) {
       console.error('Error creating order items:', itemsError);
@@ -95,28 +99,72 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Order items created successfully');
 
+    // Decrement inventory for purchased items
+    for (const item of cartItems) {
+      const { error: inventoryError } = await supabaseClient
+        .from('inventory')
+        .update({ quantity_in_stock: 'quantity_in_stock - ' + item.quantity })
+        .eq('product_id', item.product_id);
+
+      if (inventoryError) {
+        console.error(`Error updating inventory for product ${item.product_id}:`, inventoryError);
+        // Decide how to handle inventory update errors - for now, just log and continue
+      }
+    }
+
+    console.log('Inventory updated successfully');
+
+    // Update total amount in the order
+    const { error: updateTotalError } = await supabaseClient
+      .from('orders')
+      .update({ total_amount: totalAmount })
+      .eq('id', orderData.id);
+
+    if (updateTotalError) {
+      console.error('Error updating order total:', updateTotalError);
+      // Continue without throwing error, as order and items are already created
+    }
+
+    console.log('Order total updated');
+
+    // Fetch order items with product details for email
+    const { data: orderItemsWithDetails, error: fetchItemsError } = await supabaseClient
+      .from('order_items')
+      .select(`
+        quantity,
+        price_at_purchase,
+        products (
+          name,
+          sku,
+          image_url
+        )
+      `)
+      .eq('order_id', orderData.id);
+
+    if (fetchItemsError) {
+      console.error('Error fetching order items with details:', fetchItemsError);
+      // Continue without throwing error, as order and items are already created
+    }
+
     // Send confirmation email
-    const itemsHtml = cartItems
-      .map(
+    const itemsHtml = orderItemsWithDetails
+      ?.map(
         (item) => `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${
-            item.name
+            item.products?.name || 'N/A'
           }</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${
-            item.itemNumber
-          }</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${
-            item.size
+            item.products?.sku || 'N/A'
           }</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${
             item.quantity
           }</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">$${item.msrp.toFixed(
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">$${item.price_at_purchase.toFixed(
             2
           )}</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">$${(
-            item.msrp * item.quantity
+            item.price_at_purchase * item.quantity
           ).toFixed(2)}</td>
         </tr>
       `
@@ -126,14 +174,14 @@ const handler = async (req: Request): Promise<Response> => {
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333; text-align: center;">Purchase Order Confirmation</h1>
-        
+
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h2 style="color: #333; margin-top: 0;">Order Details</h2>
-          <p><strong>Order Number:</strong> ${orderData.order_number}</p>
+          <p><strong>Order ID:</strong> ${orderData.id}</p>
           <p><strong>Customer:</strong> ${customerInfo.name}</p>
           <p><strong>Email:</strong> ${customerInfo.email}</p>
-          <p><strong>Phone:</strong> ${customerInfo.phone}</p>
-          <p><strong>City:</strong> ${customerInfo.city}</p>
+          <p><strong>Address:</strong> ${customerInfo.address}</p>
+          <p><strong>Order Date:</strong> ${new Date(orderData.order_date).toLocaleString()}</p>
         </div>
 
         <h3 style="color: #333;">Items Ordered</h3>
@@ -142,7 +190,6 @@ const handler = async (req: Request): Promise<Response> => {
             <tr style="background: #f1f3f4;">
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">SKU</th>
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Size</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Qty</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Price</th>
               <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Subtotal</th>
@@ -155,10 +202,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
-          <p><strong>Total Units:</strong> ${totals.totalUnits}</p>
-          <p><strong>Total MSRP:</strong> $${totals.totalMSRP.toFixed(2)}</p>
-          <p><strong>Unit Price:</strong> $${totals.unitPrice.toFixed(2)}</p>
-          <p style="font-size: 18px; color: #2d5016;"><strong>Estimated Total: $${totals.estimatedTotal.toFixed(
+          <p style="font-size: 18px; color: #2d5016;"><strong>Total Amount: $${totalAmount.toFixed(
             2
           )}</strong></p>
         </div>
@@ -174,10 +218,11 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
+    // Send email to customer and client
     const emailResponse = await resend.emails.send({
       from: 'Body Products <onboarding@resend.dev>',
-      to: [customerInfo.email],
-      subject: `Purchase Order Confirmation - ${orderData.order_number}`,
+      to: [customerInfo.email, '012009@gmail.com'], // Send to both customer and client
+      subject: `Purchase Order Confirmation - Order ID: ${orderData.id}`,
       html: emailHtml,
     });
 
@@ -186,7 +231,6 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: true,
-        orderNumber: orderData.order_number,
         orderId: orderData.id,
         message: 'Purchase order submitted successfully!',
       }),
@@ -212,4 +256,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-export const submitPurchaseOrder = handler;
+serve(handler); // Use serve to handle incoming requests
