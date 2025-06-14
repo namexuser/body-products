@@ -31,6 +31,35 @@ const handler = async (req: Request): Promise<Response> => {
     const { name, email, subject, message }: ContactSubmissionRequest =
       await req.json();
 
+    // Basic validation
+    if (!name || !email || !subject || !message) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required fields',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Simple email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid email format',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
     console.log('Processing contact form submission from:', email);
 
     // Insert submission into contact_submissions table
@@ -47,7 +76,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (submissionError) {
       console.error('Error saving contact submission:', submissionError);
-      throw new Error(`Failed to save contact submission: ${submissionError.message}`);
+      // Return a more specific error response
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to save contact submission: ${submissionError.message}`,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('Contact submission saved:', submissionData.id);

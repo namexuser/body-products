@@ -21,7 +21,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getCartTotal: () => { totalMSRP: number; totalUnits: number; estimatedTotal: number; unitPrice: number; statusMessage: string };
+  getCartTotal: () => { totalMSRP: number; totalUnits: number; estimatedTotal: number; unitPrice: number; discountPercentage: number; statusMessage: string };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -37,27 +37,33 @@ export const useCart = () => {
 const getTieredPricing = (totalMSRP: number, totalUnits: number) => {
   let estimatedTotal: number;
   let unitPrice: number;
+  let discountPercentage: number;
   let message = "Estimated total confirmed.";
 
   if (totalUnits < 250) {
     estimatedTotal = totalMSRP; // No discount below 250 units
     unitPrice = totalUnits > 0 ? totalMSRP / totalUnits : 0;
+    discountPercentage = 0;
     message = `Minimum purchase of 250 units not met. Please add ${250 - totalUnits} more units to your cart.`;
   } else if (totalUnits >= 250 && totalUnits < 900) {
-    estimatedTotal = totalMSRP * 0.265; // 73.5% discount
+    discountPercentage = 73.5;
+    estimatedTotal = totalMSRP * (1 - discountPercentage / 100);
     unitPrice = estimatedTotal / totalUnits;
   } else if (totalUnits >= 900 && totalUnits < 1800) {
-    estimatedTotal = totalMSRP * 0.22; // 78% discount
+    discountPercentage = 78;
+    estimatedTotal = totalMSRP * (1 - discountPercentage / 100);
     unitPrice = estimatedTotal / totalUnits;
   } else if (totalUnits >= 1800 && totalUnits < 4000) {
-    estimatedTotal = totalMSRP * 0.19; // 81% discount
+    discountPercentage = 81;
+    estimatedTotal = totalMSRP * (1 - discountPercentage / 100);
     unitPrice = estimatedTotal / totalUnits;
   } else { // totalUnits >= 4000
-    estimatedTotal = totalMSRP * 0.16; // 84% discount
+    discountPercentage = 84;
+    estimatedTotal = totalMSRP * (1 - discountPercentage / 100);
     unitPrice = estimatedTotal / totalUnits;
   }
 
-  return { unitPrice, finalTotal: estimatedTotal, message };
+  return { unitPrice, finalTotal: estimatedTotal, discountPercentage, message };
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -113,14 +119,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getCartTotal = () => {
     const totalMSRP = cartItems.reduce((sum, item) => sum + (item.msrp * item.quantity), 0);
     const totalUnits = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    
-    const { unitPrice, finalTotal, message } = getTieredPricing(totalMSRP, totalUnits);
-    
+
+    const { unitPrice, finalTotal, discountPercentage, message } = getTieredPricing(totalMSRP, totalUnits);
+
     return {
       totalMSRP,
       totalUnits,
       estimatedTotal: finalTotal,
       unitPrice,
+      discountPercentage,
       statusMessage: message
     };
   };

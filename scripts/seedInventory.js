@@ -3,9 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url'; // Import fileURLToPath
-import { dirname } from 'path'; // Import dirname
-import dotenv from 'dotenv'; // Import dotenv
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import dotenv from 'dotenv';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -29,11 +29,37 @@ async function seedInventory() {
     console.log('Starting inventory data seeding...');
 
     try {
+        // Delete existing data from inventory and products tables
+        console.log('Deleting existing inventory data...');
+        const { error: deleteInventoryError } = await supabase
+            .from('inventory')
+            .delete()
+            .neq('product_id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+        if (deleteInventoryError) {
+            console.error('Error deleting existing inventory data:', deleteInventoryError);
+            return;
+        }
+        console.log('Existing inventory data deleted.');
+
+        console.log('Deleting existing products data...');
+        const { error: deleteProductsError } = await supabase
+            .from('products')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+        if (deleteProductsError) {
+            console.error('Error deleting existing products data:', deleteProductsError);
+            return;
+        }
+        console.log('Existing products data deleted.');
+
+
         // Read and parse the inventory JSON data
         const inventoryJsonContent = fs.readFileSync(inventoryJsonPath, 'utf8');
         const productsData = JSON.parse(inventoryJsonContent);
 
-        // Get list of available image files
+        // Get list of available image files (for logging/verification)
         const imageFiles = fs.readdirSync(imageDirectory);
         console.log('Available image files:', imageFiles);
 
@@ -52,55 +78,65 @@ async function seedInventory() {
                 "QUANTITY": quantityInStock
             } = product;
 
-            // Skip products with missing or "TBD" SKU, MSRP, or QUANTITY
-            if (!sku || sku === 'TBD' || !msrpString || msrpString === 'TBD' || quantityInStock === null || quantityInStock === undefined) {
-                console.warn(`Skipping product due to missing/TBD data: ${name || 'Unknown Product'}`);
-                continue;
-            }
+            // Handle "Missing" or "TBD" values for SKU, MSRP, and Ingredients
+            const productSku = (sku === 'Missing' || sku === 'TBD' || !sku) ? null : sku;
+            const productMSRP = (msrpString === 'Missing' || msrpString === 'TBD' || !msrpString) ? 0.00 : parseFloat(msrpString.replace('$', ''));
+            const productIngredients = (ingredients === 'Missing' || ingredients === 'TBD' || !ingredients) ? [] : (Array.isArray(ingredients) ? ingredients : ingredients.split(',').map(item => item.trim())); // Handle string or array ingredients
 
-            // Skip if SKU has already been inserted
-            if (insertedSkus.has(sku)) {
-                console.warn(`Skipping duplicate product with SKU: ${sku}`);
-                continue;
-            }
-
-            // Clean up MSRP string and convert to number
-            const price = parseFloat(msrpString.replace('$', ''));
-
-            // Determine image URL based on SKU
+            // Determine image URL based on SKU (for insertion into image_url column)
             let imageUrl = null;
-            const baseImageName = `${sku}`;
-            const imageExtensions = ['.png', '.jpg', '.jpeg']; // Common image extensions
+            if (productSku) {
+                const baseImageName = `${productSku}`;
+                const imageExtensions = ['.png', '.jpg', '.jpeg']; // Common image extensions
 
-            for (const ext of imageExtensions) {
-                const frontImage = `${baseImageName}${ext}`;
-                if (imageFiles.includes(frontImage)) {
-                    imageUrl = `/product-images/${frontImage}`;
-                    break; // Found the primary image, no need to check others
-                }
-            }
-
-            // If no primary image found, check for back view image
-            if (!imageUrl) {
-                 for (const ext of imageExtensions) {
-                    const backImage = `${baseImageName}-B${ext}`;
-                    if (imageFiles.includes(backImage)) {
-                        imageUrl = `/product-images/${backImage}`;
-                        break; // Found a back view image
+                for (const ext of imageExtensions) {
+                    const frontImage = `${baseImageName}${ext}`;
+                    if (imageFiles.includes(frontImage)) {
+                        imageUrl = `/product-images/${frontImage}`;
+                        break; // Found the primary image
                     }
                 }
+                 // If no primary image found, check for back view image
+                if (!imageUrl) {
+                     for (const ext of imageExtensions) {
+                        const backImage = `${baseImageName}-B${ext}`;
+                        if (imageFiles.includes(backImage)) {
+                            imageUrl = `/product-images/${backImage}`;
+                            break; // Found a back view image
+                        }
+                    }
+                }
+            }
+
+
+            // Skip products with missing or "TBD" SKU if you decide not to include them,
+            // but based on the user's instruction, we will include all products.
+            // We will still skip if quantity is missing or invalid.
+             if (quantityInStock === null || quantityInStock === undefined) {
+                console.warn(`Skipping product due to missing quantity: ${name || 'Unknown Product'}`);
+                continue;
+            }
+
+            // Skip if SKU has already been inserted (only if SKU is not null)
+            if (productSku && insertedSkus.has(productSku)) {
+                console.warn(`Skipping duplicate product with SKU: ${productSku}`);
+                continue;
             }
 
             // Insert into products table
             const { data: productData, error: productError } = await supabase
                 .from('products')
                 .insert([{
-                    name: `${name} - ${size} (${type})`, // Combine name, size, and type for clarity
-                    description: `Fragrance Notes: ${fragranceNotes}\nIngredients: ${ingredients}`, // Combine fragrance notes and ingredients
-                    price: price,
-                    image_url: imageUrl,
-                    // Add other relevant fields if needed, e.g., sku
-                    sku: sku // Add SKU to products table for easier lookup
+                    name: name,
+                    description: `Fragrance Notes: ${fragranceNotes}`, // Store fragrance notes in description
+                    price: productMSRP, // Inserting into 'price'
+                    msrp: productMSRP, // Inserting into 'msrp'
+                    product_type: type,
+                    size: size,
+                    scent: fragranceNotes, // Store fragrance notes in scent column
+                    ingredients: productIngredients,
+                    sku: productSku, // Insert the potentially null SKU
+                    image_url: imageUrl // Insert the determined image URL
                 }])
                 .select(); // Select the inserted data to get the ID
 
@@ -123,7 +159,9 @@ async function seedInventory() {
                 console.error('Error inserting inventory for product:', name, inventoryError);
             } else {
                 console.log('Successfully inserted product and inventory for:', name);
-                insertedSkus.add(sku); // Add SKU to the set after successful insertion
+                if (productSku) {
+                    insertedSkus.add(productSku); // Add SKU to the set after successful insertion
+                }
             }
         }
 

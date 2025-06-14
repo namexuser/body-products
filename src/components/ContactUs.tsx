@@ -16,11 +16,21 @@ const ContactUs = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+// Simple email validation regex
+const validateEmail = (email: string): boolean => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.subject || !formData.message) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!validateEmail(formData.email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
@@ -162,7 +172,7 @@ const ContactUs = () => {
                 <p className="text-primary font-medium">Monday to Friday, 10AM to 5PM EST</p>
                 <p className="text-sm text-muted-foreground">Weekend: By appointment only</p>
                 <h3 className="font-semibold">Mailing Address</h3>
-                <p className="text-primary font-medium">The Liquid Group LLC</p>
+                <p className="text-primary font-medium">Off-Price Pro</p>
                 <p className="text-primary font-medium">78 SW 7th Street, Miami, FL 33130</p>
               </div>
             </CardContent>

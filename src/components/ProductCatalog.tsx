@@ -17,6 +17,13 @@ interface SelectQueryError<T extends string = string> {
   message: T;
 }
 
+// Interface for the data returned directly from the Supabase query
+// Adjusted based on typical Supabase join results
+interface SelectQueryError<T extends string = string> {
+  error: boolean;
+  message: T;
+}
+
 // Interface for the raw data returned directly from the Supabase query
 interface DisplayProduct {
   id: string;
@@ -49,14 +56,16 @@ interface RawFetchedProduct {
   scent: string | null;
   ingredients: string[] | null;
   msrp: number;
-  inventory: Inventory[] | SelectQueryError<string> | null | undefined;
+  inventory: { quantity_in_stock: number }[] | SelectQueryError<string> | null; // Reverted to include SelectQueryError
 }
 const ProductCatalog = () => {
   const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0); // 0-indexed page number
+  const [itemsPerPage] = useState(12); // Number of items per page
+  const [hasMore, setHasMore] = useState(true); // To check if there are more products to load
   const [filters, setFilters] = useState({
-    productType: 'all',
-    search: ''
+    productType: 'all'
   });
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [expandedIngredients, setExpandedIngredients] = useState<Record<string, boolean>>({});
@@ -64,29 +73,57 @@ const ProductCatalog = () => {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(page);
+  }, [page]); // Depend on page state
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (currentPage: number) => {
+    setLoading(true);
+    const from = currentPage * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
     try {
-      const { data, error } = await supabase
+      // Fetch products with pagination
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, sku, product_type, size, scent, ingredients, msrp, inventory(quantity_in_stock)')
-        .order('name');
+        .select('id, name, description, image_url, sku, product_type, size, scent, ingredients, msrp')
+        .order('name')
+        .range(from, to);
 
-      if (error) {
-        console.error('Error fetching products:', error);
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
         toast.error('Failed to load products');
+        setLoading(false);
         return;
       }
 
-      if (data) {
-        // Map the fetched data to the DisplayProduct interface
-        const productsWithInventory: DisplayProduct[] = (data as any).map((product: RawFetchedProduct) => {
-          console.log('Type of data[0].inventory:', typeof data[0].inventory);
-          const quantity = (product.inventory && Array.isArray(product.inventory) && product.inventory.length > 0)
-            ? product.inventory[0].quantity_in_stock
-            : 0;
+      // Fetch inventory data separately
+      // Note: For large inventories, fetching all inventory data might still be a bottleneck.
+      // A more advanced approach would involve fetching inventory only for the products on the current page.
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory')
+        .select('product_id, quantity_in_stock');
+
+      if (inventoryError) {
+        console.error('Error fetching inventory:', inventoryError);
+        toast.error('Failed to load inventory data');
+        // Continue with products data even if inventory fails, showing 0 stock
+      }
+
+      if (productsData) {
+        console.log('Fetched products data:', productsData); // Log fetched data
+        console.log('Fetched inventory data:', inventoryData); // Log fetched inventory data
+
+        // Create a map for quick lookup of inventory by product_id
+        const inventoryMap = new Map<string, number>();
+        if (inventoryData) {
+          inventoryData.forEach(item => {
+            inventoryMap.set(item.product_id, item.quantity_in_stock);
+          });
+        }
+
+        // Map the fetched product data and merge with inventory
+        const productsWithInventory: DisplayProduct[] = productsData.map((product) => {
+          const quantity = inventoryMap.get(product.id) || 0; // Get quantity from map, default to 0
 
           return {
             id: product.id,
@@ -103,28 +140,36 @@ const ProductCatalog = () => {
           };
         });
 
-        setProducts(productsWithInventory);
+        // Append new products to the existing list
+        setProducts(prevProducts => [...prevProducts, ...productsWithInventory]);
+
+        // Check if there are more products to load
+        setHasMore(productsData.length === itemsPerPage);
+
       } else {
-        setProducts([]);
+        // If no data is returned, there are no more products
+        setHasMore(false);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load data');
+      setHasMore(false); // Assume no more data on error
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchesType = filters.productType === 'all' || (typeof product.product_type === 'string' && product.product_type.toLowerCase() === filters.productType);
-      const matchesSearch = !filters.search ||
-        (typeof product.name === 'string' && product.name.toLowerCase().includes(filters.search.toLowerCase())) ||
-        (typeof product.sku === 'string' && product.sku.toLowerCase().includes(filters.search.toLowerCase()));
 
-      return matchesType && matchesSearch;
+      return matchesType;
     });
-  }, [products, filters]);
+  }, [products, filters.productType]);
 
   const productTypes = useMemo(() => {
     // Filter products to get only those with valid string product_type,
@@ -173,7 +218,7 @@ const ProductCatalog = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ productType: 'all', search: '' });
+    setFilters({ productType: 'all' });
   };
 
   if (loading) {
@@ -194,7 +239,7 @@ const ProductCatalog = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary">Product Catalog</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-primary">Catalog</h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Browse product details and add items to your cart for easy ordering. Minimum order is 250 units. Enjoy discounts of 73% to 84% off MSRP.
           </p>
@@ -231,15 +276,6 @@ const ProductCatalog = () => {
             })}
         </div>
 
-        {/* Search Input */}
-        <div className="mb-8">
-          <Input
-            placeholder="Search products by name or SKU..."
-            value={filters.search}
-            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-            className="w-full max-w-md mx-auto"
-          />
-        </div>
 
         {/* Results Summary */}
         <div className="flex justify-between items-center">
@@ -252,9 +288,9 @@ const ProductCatalog = () => {
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map(product => (
-              <Card key={product.id} className="hover:shadow-lg transition-all duration-200 flex flex-col h-full">
+              <Card key={product.id} className="rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 flex flex-col h-full">
                 <CardHeader className="p-0 relative">
-                  <div className="w-full h-48 bg-muted rounded-t-lg flex items-center justify-center overflow-hidden relative">
+                  <div className="w-full h-48 bg-muted flex items-center justify-center overflow-hidden relative">
                     {product.image_url ? (
                       <>
                         <a
@@ -269,14 +305,14 @@ const ProductCatalog = () => {
                             className="w-full h-full object-cover"
                           />
                         </a>
-                        <Badge variant="secondary" className="absolute top-2 right-2 bg-white/80 text-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                        <Badge variant="secondary" className="absolute top-2 right-2 bg-black text-white px-3 py-1 rounded-full text-xs font-semibold">
                           {product.product_type}
                         </Badge>
                         <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-2 p-2 bg-gradient-to-t from-black/50 to-transparent">
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="text-xs h-7 px-3"
+                            className="text-xs h-7 px-3 bg-white/80 text-black hover:bg-white"
                             onClick={() => setCurrentImage(prev => ({ ...prev, [product.id]: 'front' }))}
                           >
                             Front
@@ -284,7 +320,7 @@ const ProductCatalog = () => {
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="text-xs h-7 px-3"
+                            className="text-xs h-7 px-3 bg-white/80 text-black hover:bg-white"
                             onClick={() => setCurrentImage(prev => ({ ...prev, [product.id]: 'back' }))}
                           >
                             Back
@@ -300,21 +336,24 @@ const ProductCatalog = () => {
                   </div>
                 </CardHeader>
  
-                <CardContent className="p-4 flex flex-col justify-between">
-                  <div className="space-y-2">
+                <CardContent className="p-4 flex flex-col justify-between flex-grow space-y-2"> {/* Adjusted padding and spacing */}
+                  <div className="space-y-1">
                     <CardTitle className="text-lg font-semibold leading-tight">{product.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Size:</span> {product.size}
-                    </p>
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-muted-foreground">Size:</span>
+                      <span className="text-foreground">{product.size}</span>
+                    </div>
                     {product.scent && (
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-medium">Fragrance Notes:</span> {product.scent}
-                      </p>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium flex-shrink-0 text-muted-foreground">Fragrance Notes:</span>
+                        <span className="truncate overflow-hidden text-ellipsis min-w-0 text-foreground">{product.scent}</span>
+                      </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Available:</span> {product.quantity} units
-                    </p>
- 
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-muted-foreground">Available:</span>
+                      <span className="text-foreground">{product.quantity} units</span>
+                    </div>
+
                     {product.ingredients && product.ingredients.length > 0 && (
                       <Collapsible
                         open={expandedIngredients[product.id]}
@@ -324,39 +363,39 @@ const ProductCatalog = () => {
                         <CollapsibleTrigger asChild>
                           <Button variant="ghost" size="sm" className="w-full justify-between p-2 text-sm">
                             <span className="flex items-center gap-2">
-                              <Info size={14} />
-                              Ingredients
+                               <Info size={14} />
+                               Ingredients
                             </span>
                             <span className="text-xs">
-                              {expandedIngredients[product.id] ? 'Hide' : 'Show'}
+                               {expandedIngredients[product.id] ? 'Hide' : 'Show'}
                             </span>
                           </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-2 pt-2">
                           <div className="flex flex-wrap gap-1">
                             {product.ingredients.map((ingredient, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {ingredient}
-                              </Badge>
+                               <Badge key={index} variant="outline" className="text-xs">
+                                 {ingredient}
+                               </Badge>
                             ))}
                           </div>
                         </CollapsibleContent>
                       </Collapsible>
                     )}
                   </div>
- 
-                  <div className="mt-4">
+
+                  <div className="mt-auto pt-4"> {/* Use mt-auto to push to bottom */}
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-medium">MSRP:</span>
-                      <span className="text-xl font-bold text-primary line-through">${product.msrp.toFixed(2)}</span>
+                      <span className="text-sm font-medium text-muted-foreground">MSRP:</span>
+                      <span className="text-xl font-bold text-gray-600 line-through">${product.msrp.toFixed(2)}</span> {/* Adjusted color */}
                     </div>
 
-                    <div className="flex items-center justify-center gap-2 w-full">
+                    <div className="flex items-center gap-2 w-full mb-3">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => updateQuantity(product.id, -250)}
-                        className="h-9 w-9 p-0"
+                        className="h-9 w-9"
                         disabled={product.quantity === 0 || (quantities[product.id] || 250) <= 250}
                       >
                         <Minus size={16} />
@@ -364,20 +403,22 @@ const ProductCatalog = () => {
                       <Input
                         type="number"
                         min="250"
-                        step="250"
                         value={quantities[product.id] || 250}
-                        onChange={(e) => setQuantities(prev => ({
-                          ...prev,
-                          [product.id]: Math.max(250, parseInt(e.target.value) || 250)
-                        }))}
-                        className="w-24 text-center h-9"
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          setQuantities(prev => ({
+                            ...prev,
+                            [product.id]: Math.max(250, isNaN(value) ? 250 : value)
+                          }));
+                        }}
+                        className="w-full sm:w-24 text-center h-9"
                         disabled={product.quantity === 0}
                       />
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => updateQuantity(product.id, 250)}
-                        className="h-9 w-9 p-0"
+                        className="h-9 w-9"
                         disabled={product.quantity === 0}
                       >
                         <Plus size={16} />
@@ -386,7 +427,7 @@ const ProductCatalog = () => {
 
                     <Button
                       onClick={() => handleAddToCart(product)}
-                      className="w-full h-10"
+                      className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
                       size="sm"
                       disabled={product.quantity === 0}
                     >
@@ -411,6 +452,18 @@ const ProductCatalog = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="flex justify-center mt-8">
+            <Button
+              onClick={handleLoadMore}
+              disabled={loading}
+            >
+              {loading ? 'Loading More...' : 'Load More'}
+            </Button>
+          </div>
         )}
       </div>
     </div>

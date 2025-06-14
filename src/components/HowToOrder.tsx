@@ -23,7 +23,7 @@ const HowToOrder = () => {
     },
     {
       title: "Meet Minimum Requirements",
-      description: "Ensure your order meets the minimum purchase requirement of $1,000 MSRP to qualify for our wholesale pricing."
+      description: "Ensure your order meets the minimum purchase requirement of 250 units to qualify for our wholesale pricing."
     },
     {
       title: "Submit Order Request",
@@ -86,7 +86,7 @@ const HowToOrder = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-2">Review Cart & Pricing</h3>
-                <p className="text-muted-foreground">Check your cart to confirm items. Ensure your order totals at least $1,000 after discounts. Our tiered pricing adjusts your estimated total based on order size.</p>
+                <p className="text-muted-foreground">Check your cart to confirm items. Ensure your order meets the minimum requirement of 250 units. Our tiered pricing adjusts your estimated total based on order size.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -152,7 +152,7 @@ const HowToOrder = () => {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-              <p><strong>Minimum Order:</strong> 250 Units minimum required for all purchase orders, AND your order must total at least $1,000 after discounts.</p>
+              <p><strong>Minimum Order:</strong> 250 Units minimum required for all purchase orders.</p>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3">
               <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />

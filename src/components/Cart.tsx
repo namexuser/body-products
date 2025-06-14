@@ -8,6 +8,12 @@ import { useCart } from "../context/CartContext";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 
+// Simple email validation regex
+const validateEmail = (email: string): boolean => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart, getCartTotal } = useCart();
   const [clientInfo, setClientInfo] = useState({
@@ -17,9 +23,9 @@ const Cart = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { totalMSRP, totalUnits, estimatedTotal, unitPrice, statusMessage } = getCartTotal();
-  const canSubmitOrder = totalUnits >= 250 && estimatedTotal >= 1000;
-
+  const { totalMSRP, totalUnits, estimatedTotal, unitPrice, discountPercentage, statusMessage } = getCartTotal();
+  const canSubmitOrder = totalUnits >= 250;
+ 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     updateQuantity(productId, newQuantity);
@@ -29,13 +35,18 @@ const Cart = () => {
     e.preventDefault();
 
     if (!canSubmitOrder) {
-      toast.error('Minimum purchase requirement of 250 units and $1,000 after discounts not met');
+      toast.error('Minimum purchase requirement of 250 units not met');
       return;
     }
-
+ 
     // Updated validation for required fields
     if (!clientInfo.name || !clientInfo.email || !clientInfo.address) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!validateEmail(clientInfo.email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
@@ -154,7 +165,7 @@ const Cart = () => {
       {/* Order Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Order Summary Before Discount</CardTitle>
+          <CardTitle>Order Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between">
@@ -165,6 +176,13 @@ const Cart = () => {
           <div className="flex justify-between">
             <span>Total MSRP (before discount):</span>
             <span className="font-medium line-through">${totalMSRP.toFixed(2)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Discount:</span>
+            <span className="font-medium text-green-600">
+              {discountPercentage > 0 ? `${discountPercentage.toFixed(1)}%` : 'N/A'}
+            </span>
           </div>
 
           <Separator />

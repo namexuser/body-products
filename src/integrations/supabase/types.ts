@@ -167,7 +167,30 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
+      },
+      inventory: {
+        Row: {
+          product_id: string;
+          quantity_in_stock: number;
+        };
+        Insert: {
+          product_id: string;
+          quantity_in_stock: number;
+        };
+        Update: {
+          product_id?: string;
+          quantity_in_stock?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      },
     }
     Views: {
       [_ in never]: never

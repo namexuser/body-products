@@ -35,6 +35,80 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { customerInfo, cartItems }: PurchaseOrderRequest = await req.json();
 
+    // Basic validation for customer info
+    if (!customerInfo || !customerInfo.name || !customerInfo.email || !customerInfo.address) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required customer information (name, email, or address)',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Simple email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerInfo.email)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid customer email format',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Basic address validation (non-empty)
+    if (!customerInfo.address || customerInfo.address.trim() === '') {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Address field is required',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Basic validation for cart items
+    if (!cartItems || cartItems.length === 0) {
+       return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Cart is empty',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate each item in the cart
+    for (const item of cartItems) {
+      if (!item.product_id || typeof item.quantity !== 'number' || item.quantity <= 0) {
+         return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Invalid item in cart: product_id ${item.product_id}, quantity ${item.quantity}`,
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+    }
+
+
     console.log('Processing purchase order for:', customerInfo.email);
 
     // Fetch product details for items in the cart
@@ -46,7 +120,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (productsError) {
       console.error('Error fetching product details:', productsError);
-      throw new Error(`Failed to fetch product details: ${productsError.message}`);
+      // Return a more specific error response
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to fetch product details: ${productsError.message}`,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     // Create order
@@ -108,7 +192,19 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (inventoryError) {
         console.error(`Error updating inventory for product ${item.product_id}:`, inventoryError);
-        // Decide how to handle inventory update errors - for now, just log and continue
+        // If an inventory update fails, we should probably not proceed with the order confirmation.
+        // In a real-world scenario, you might want to implement a rollback mechanism here.
+        // For now, we will return an error response.
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Failed to update inventory for product ${item.product_id}: ${inventoryError.message}`,
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
       }
     }
 

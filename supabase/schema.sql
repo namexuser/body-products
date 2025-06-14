@@ -5,10 +5,13 @@ CREATE TABLE products (
     description TEXT,
     msrp DECIMAL(10, 2) NOT NULL,
     image_url VARCHAR(255),
+    image_url_front VARCHAR(255),
+    image_url_back VARCHAR(255),
     product_type VARCHAR(255),
     size VARCHAR(255),
     scent TEXT,
-    ingredients TEXT[]
+    ingredients TEXT[],
+    available_units INTEGER NOT NULL DEFAULT 0 CHECK (available_units >= 0)
 );
 
 -- Create the inventory table
