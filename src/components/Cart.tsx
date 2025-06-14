@@ -130,6 +130,7 @@ const Cart = () => {
                   {/* Display product name and SKU from cart item */}
                   <h4 className="font-medium">{item.name}</h4>
                   <p className="text-sm text-muted-foreground">SKU: {item.sku}</p> {/* Use item.sku */}
+                  <p className="text-sm text-muted-foreground">Type: {item.product_type}</p>
                 </div>
 
                 <div className="text-left sm:text-right w-full sm:w-auto">

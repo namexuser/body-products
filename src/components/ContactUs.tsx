@@ -166,9 +166,8 @@ const validateEmail = (email: string): boolean => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <h3 className="font-semibold">Get in Touch</h3>
+                <p className="text-primary font-medium">Email ask@offprice.pro</p>
                 <p className="text-primary font-medium">Phone 305 747 1297</p>
-                <h3 className="font-semibold">Business Hours</h3>
                 <p className="text-primary font-medium">Monday to Friday, 10AM to 5PM EST</p>
                 <p className="text-sm text-muted-foreground">Weekend: By appointment only</p>
                 <h3 className="font-semibold">Mailing Address</h3>
