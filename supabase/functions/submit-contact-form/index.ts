@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: 'Contact Form <onboarding@resend.dev>', // You might want a different 'from' address
+      from: 'Contact Form <ask@offprice.pro>', // You might want a different 'from' address
       to: ['012009@gmail.com'], // Send to the client's email address
       subject: `New Contact Form Submission - ${subject}`,
       html: emailHtml,

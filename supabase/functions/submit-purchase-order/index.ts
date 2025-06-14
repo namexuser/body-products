@@ -316,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to customer and client
     const emailResponse = await resend.emails.send({
-      from: 'Body Products <onboarding@resend.dev>',
+      from: 'Body Products <ask@offprice.pro>',
       to: [customerInfo.email, '012009@gmail.com'], // Send to both customer and client
       subject: `Purchase Order Confirmation - Order ID: ${orderData.id}`,
       html: emailHtml,
