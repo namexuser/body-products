@@ -189,32 +189,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Order items created successfully');
 
-    // Decrement inventory for purchased items
-    for (const item of cartItems) {
-      const { error: inventoryError } = await supabaseClient
-        .from('inventory')
-        .decrement('quantity_in_stock', item.quantity)
-        .eq('product_id', item.product_id);
-
-      if (inventoryError) {
-        console.error(`Error updating inventory for product ${item.product_id}:`, inventoryError);
-        // If an inventory update fails, we should probably not proceed with the order confirmation.
-        // In a real-world scenario, you might want to implement a rollback mechanism here.
-        // For now, we will return an error response.
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: `Failed to update inventory for product ${item.product_id}: ${inventoryError.message}`,
-          }),
-          {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-    }
-
-    console.log('Inventory updated successfully');
 
     // Update total amount in the order
     const { error: updateTotalError } = await supabaseClient
@@ -327,7 +301,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to customer and client
     const emailResponse = await resend.emails.send({
-      from: 'Off-Price <ask@offprice.pro>',
+      from: 'Off-Price Pro <ask@offprice.pro>',
       to: [customerInfo.email, 'ask@offprice.pro'], // Send to both customer and client
       subject: `Purchase Order Confirmation - Order ID: ${orderData.id}`,
       html: emailHtml,
