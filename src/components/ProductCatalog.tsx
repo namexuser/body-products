@@ -58,6 +58,13 @@ interface RawFetchedProduct {
   msrp: number;
   inventory: { quantity_in_stock: number }[] | SelectQueryError<string> | null; // Reverted to include SelectQueryError
 }
+const toTitleCase = (str: string | null | undefined): string => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+};
 const ProductCatalog = () => {
   const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -348,12 +355,15 @@ const ProductCatalog = () => {
                     {product.scent && (
                       <div className="flex flex-col text-sm">
                         <span className="font-medium text-muted-foreground mb-1">Fragrance Notes:</span>
-                        <span className="text-foreground">{product.scent}</span>
+                        <span className="text-foreground">{toTitleCase(product.scent)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between items-center text-sm">
                       <span className="font-medium text-muted-foreground">Available:</span>
                       <span className="text-foreground">{product.quantity} units</span>
+                      {product.quantity > 0 && product.quantity <= 100 && (
+                        <Badge variant="destructive" className="ml-2">Low Stock</Badge>
+                      )}
                     </div>
 
                     {product.ingredients && product.ingredients.length > 0 && (
