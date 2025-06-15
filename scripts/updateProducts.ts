@@ -150,83 +150,32 @@ const productsToUpdate: ProductData[] = [
 ];
 
 async function updateProducts() {
-  console.log('Starting product update script...');
+  console.log('Starting product image URL update script...');
 
   for (const productData of productsToUpdate) {
     const {
-      "LOCATION": location,
-      "QUANTITY": quantity,
-      "PRODUCT NAME": name,
-      "SIZE": size,
-      "PRODUCT TYPE": product_type,
       "ITEM NUMBER": item_number,
-      "MSRP": msrpString,
-      "FRAGRANCE": fragrance,
-      "INGREDIENTS": ingredientsString,
     } = productData;
 
-    const msrp = parseFloat(msrpString.replace('$', ''));
-    const ingredients = ingredientsString.split(', ').map(s => s.trim());
-    const description = fragrance; // Using fragrance notes as description
-    const image_url = `/product-images/${item_number}.jpg`; // Front image by default
+    const new_image_url = `/product-images/${item_number}.webp`; // New WebP image URL
 
     try {
-      // Check if product exists
-      const { data: existingProducts, error: fetchError } = await supabase
+      // Update only the image_url for the product with the matching item_number
+      const { error: updateError } = await supabase
         .from('products')
-        .select('id')
-        .eq('item_number', item_number);
+        .update({ image_url: new_image_url })
+        .eq('sku', item_number); // Assuming 'sku' column in DB matches 'ITEM NUMBER' in data
 
-      if (fetchError) {
-        console.error(`Error fetching product ${item_number}:`, fetchError);
-        continue;
-      }
-
-      const productToUpsert = {
-        name,
-        product_type,
-        size,
-        msrp,
-        item_number,
-        scent: fragrance,
-        ingredients,
-        description,
-        image_url,
-        is_active: true,
-        quantity,
-        location,
-        brand_website_link: null, // Ensure this is removed
-      };
-
-      if (existingProducts && existingProducts.length > 0) {
-        // Update existing product
-        const { error: updateError } = await supabase
-          .from('products')
-          .update(productToUpsert)
-          .eq('id', existingProducts[0].id);
-
-        if (updateError) {
-          console.error(`Error updating product ${name} (${item_number}):`, updateError);
-        } else {
-          console.log(`Successfully updated product: ${name} (${item_number})`);
-        }
+      if (updateError) {
+        console.error(`Error updating image URL for product ${item_number}:`, updateError);
       } else {
-        // Insert new product
-        const { error: insertError } = await supabase
-          .from('products')
-          .insert(productToUpsert);
-
-        if (insertError) {
-          console.error(`Error inserting product ${name} (${item_number}):`, insertError);
-        } else {
-          console.log(`Successfully inserted product: ${name} (${item_number})`);
-        }
+        console.log(`Successfully updated image URL for product: ${item_number}`);
       }
     } catch (error) {
-      console.error(`An unexpected error occurred for product ${name} (${item_number}):`, error);
+      console.error(`An unexpected error occurred for product ${item_number}:`, error);
     }
   }
-  console.log('Product update script finished.');
+  console.log('Product image URL update script finished.');
 }
 
 updateProducts();

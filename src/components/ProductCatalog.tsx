@@ -12,45 +12,88 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Add the map here
 const skuCaseQuantities: Record<string, number> = {
-  "667559299899": 12,
-  "667659313242": 12,
-  "667559299882": 12,
-  "667559299820": 18,
-  "667559282563": 12,
-  "667559282501": 18,
-  "667659311231": 18,
-  "667559282440": 24,
-  "667659322251": 12,
-  "667659330638": 12,
-  "667659330645": 12,
-  "667559282662": 18,
-  "667659330652": 12,
-  "667559299363": 24,
-  "667559299875": 12,
-  "667558216231": 24,
-  "667559299950": 18,
-  "667659320462": 12,
-  "667558216255": 24,
-  "667559279969": 12,
-  "667559265665": 12,
-  "667559288381": 24,
-  "667559299370": 24,
-  "667559299837": 18,
-  "667659322282": 24,
-  "667559294504": 24,
-  "667559279211": 36,
-  "667559294542": 36,
-  "667559272496": 36,
-  "667659311279": 21,
-  "667559299936": 18,
-  "667559299813": 18,
-  "667558216248": 24,
-  "667559139690": 35,
-  "667559261148": 18,
-  "667559261124": 12,
-  "667559281627": 24,
-  "667559281665": 12,
-  "667559273059": 40,
+  "0667559299899": 12,
+  "0667659313242": 12,
+  "0667559299882": 12,
+  "0667559299820": 18,
+  "0667559282563": 12,
+  "0667559282501": 18,
+  "0667659311231": 18,
+  "0667559282440": 24,
+  "0667659322251": 12,
+  "0667659330638": 12,
+  "0667659330645": 12,
+  "0667559282662": 18,
+  "0667659330652": 12,
+  "0667559299363": 24,
+  "0667559299875": 12,
+  "0667558216231": 24,
+  "0667559299950": 18,
+  "0667659320462": 12,
+  "0667558216255": 24,
+  "0667559279969": 12,
+  "0667559265665": 12,
+  "0667559288381": 24,
+  "0667559299370": 24,
+  "0667559299837": 18,
+  "0667659322282": 24,
+  "0667559294504": 24,
+  "0667559279211": 36,
+  "0667559294542": 36,
+  "0667559272496": 36,
+  "0667659311279": 21,
+  "0667559299936": 18,
+  "0667559299813": 18,
+  "0667558216248": 24,
+  "0667559139690": 35,
+  "0667559261148": 18,
+  "0667559261124": 12,
+  "0667559281627": 24,
+  "0667559281665": 12,
+  "0667559273059": 40,
+};
+
+// Map SKU to the lowest discounted unit price (from 84% column in CSV)
+const skuDiscountedPrices: Record<string, number> = {
+  "0667559299899": 2.55,
+  "0667659313242": 2.55,
+  "0667559299882": 2.55,
+  "0667559299820": 2.87,
+  "0667559282563": 2.55,
+  "0667559282501": 2.87,
+  "0667659311231": 2.87,
+  "0667559282440": 2.87,
+  "0667659322251": 3.03,
+  "0667659330638": 2.71,
+  "0667659330645": 2.71,
+  "0667559282662": 2.55,
+  "0667659330652": 2.71,
+  "0667559299363": 2.87,
+  "0667559299875": 2.55,
+  "0667558216231": 2.71,
+  "0667559299950": 2.55,
+  "0667659320462": 2.71,
+  "0667558216255": 2.71,
+  "0667559279969": 2.39,
+  "0667559265665": 2.39,
+  "0667559288381": 2.87,
+  "0667559299370": 2.87,
+  "0667559299837": 2.87,
+  "0667659322282": 3.03,
+  "0667559294504": 2.71,
+  "0667559279211": 3.03,
+  "0667559294542": 2.71,
+  "0667559272496": 2.71,
+  "0667659311279": 2.55,
+  "0667559299936": 2.55,
+  "0667559299813": 2.87,
+  "0667558216248": 2.71,
+  "0667559139690": 3.03,
+  "0667559261148": 2.87,
+  "0667559261124": 2.55,
+  "0667559281627": 2.87,
+  "0667559281665": 2.87,
+  "0667559273059": 2.87,
 };
 
 // Interface for the data returned directly from the Supabase query
@@ -115,6 +158,7 @@ const ProductCatalog = () => {
   const [filters, setFilters] = useState({
     productType: 'all'
   });
+  // quantities state now stores the NUMBER OF CASES for each product
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [expandedIngredients, setExpandedIngredients] = useState<Record<string, boolean>>({});
   const [currentImage, setCurrentImage] = useState<Record<string, 'front' | 'back'>>({});
@@ -172,20 +216,6 @@ const ProductCatalog = () => {
           const quantity = inventoryMap.get(product.id) || 0; // Get quantity from map, default to 0
           const caseQuantity = skuCaseQuantities[product.sku] || 1; // Get case quantity from map, default to 1
 
-          // Log product details for debugging missing images
-          if (product.sku === '0667659330638' || product.sku === '0667559288381') {
-            console.log(`Debugging image for SKU ${product.sku}:`, {
-              productName: product.name,
-              sku: product.sku,
-              image_url_from_db: product.image_url,
-              constructed_front_url: `/product-images/${product.sku}.png`,
-              constructed_back_url: `/product-images/${product.sku}-B.png`,
-              has_image_url_in_db: !!product.image_url,
-              quantity: quantity,
-            });
-          }
-
-
           return {
             id: product.id,
             name: product.name,
@@ -204,10 +234,10 @@ const ProductCatalog = () => {
 
         // Set products to the fetched list (no appending needed for full load)
         setProducts(productsWithInventory);
-        // Initialize quantities state with the case quantity for each product
+        // Initialize quantities state to 1 case for each product
         const initialQuantities: Record<string, number> = {};
         productsWithInventory.forEach(product => {
-            initialQuantities[product.id] = product.caseQuantity; // Default to one case
+            initialQuantities[product.id] = 1; // Default to 1 case
         });
         setQuantities(initialQuantities);
 
@@ -245,7 +275,12 @@ const ProductCatalog = () => {
 
 
   const handleAddToCart = (product: DisplayProduct) => {
-    const quantity = quantities[product.id] || 1; // Default to 1 unit
+    const casesToOrder = quantities[product.id] || 1; // Get number of cases from state, default to 1
+    const unitsToAdd = casesToOrder * product.caseQuantity; // Calculate total units
+
+    // No minimum order enforced per product, only on total cart units
+    // The minimum order of 250 units is checked in the Cart component before submission.
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -257,10 +292,10 @@ const ProductCatalog = () => {
       scent: product.scent,
       ingredients: product.ingredients,
       msrp: product.msrp,
-    }, quantity);
-
-    toast.success(`Added ${quantity} units of ${product.name} to cart`);
-    setQuantities(prev => ({ ...prev, [product.id]: product.caseQuantity })); // Reset to 1 case after adding
+      caseQuantity: product.caseQuantity, // Include caseQuantity
+    }, unitsToAdd); // Add total units to cart
+    toast.success(`Added ${casesToOrder} case${casesToOrder > 1 ? 's' : ''} (${unitsToAdd} units) of ${product.name} to cart`); // Toast with cases and units
+    setQuantities(prev => ({ ...prev, [product.id]: 1 })); // Reset to 1 case after adding
   };
 
   const updateQuantity = (productId: string, changeInCases: number) => {
@@ -268,25 +303,25 @@ const ProductCatalog = () => {
       const product = products.find(p => p.id === productId);
       if (!product) return prev;
 
-      const currentQtyUnits = prev[productId] || product.caseQuantity; // Default to one case in units
-      let newQtyUnits = currentQtyUnits + (changeInCases * product.caseQuantity); // Change is in units
+      const currentQtyCases = prev[productId] || 1; // Default to one case
+      let newQtyCases = currentQtyCases + changeInCases; // Increment/decrement number of cases
 
-      // Ensure quantity is a multiple of caseQuantity
-      newQtyUnits = Math.max(product.caseQuantity, Math.floor(newQtyUnits / product.caseQuantity) * product.caseQuantity);
+      // Ensure quantity in cases is at least 1
+      newQtyCases = Math.max(1, newQtyCases);
 
-      // Ensure quantity does not exceed available stock
-      newQtyUnits = Math.min(newQtyUnits, product.quantity);
+      // Calculate total units for stock check
+      const totalUnits = newQtyCases * product.caseQuantity;
 
-      // Enforce minimum order of 250 units, but allow adding in case quantities
-      if (newQtyUnits < 250 && newQtyUnits !== product.caseQuantity) {
-         // If the new quantity is less than 250 and not exactly one case,
-         // snap it to the nearest multiple of caseQuantity that is >= 250,
-         // or set to one case if that's the only valid option below 250.
-         const minOrderMultiple = Math.ceil(250 / product.caseQuantity) * product.caseQuantity;
-         newQtyUnits = Math.max(minOrderMultiple, newQtyUnits);
+      // Ensure total units do not exceed available stock
+      if (totalUnits > product.quantity) {
+        // If exceeding stock, calculate the maximum number of cases possible
+        newQtyCases = Math.floor(product.quantity / product.caseQuantity);
+        // Ensure the calculated max cases is at least 1 if stock is available
+        newQtyCases = Math.max(1, newQtyCases);
       }
 
-      return { ...prev, [productId]: newQtyUnits };
+
+      return { ...prev, [productId]: newQtyCases }; // Store number of cases
     });
   };
 
@@ -321,8 +356,7 @@ const ProductCatalog = () => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-primary">Catalog</h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Browse product details and add items to your cart for easy ordering. Minimum order is 250 units. Enjoy discounts of 73% to 84% off MSRP.
-          </p>
+            73%–84% off MSRP applied in cart after adding items. Minimum order: 250 units</p>
         </div>
 
         {/* Filters Section */}
@@ -374,13 +408,13 @@ const ProductCatalog = () => {
                     {product.image_url ? (
                       <>
                         <a
-                          href={currentImage[product.id] === 'back' ? `/product-images/${product.sku}-B.png` : `/product-images/${product.sku}.png`}
+                          href={currentImage[product.id] === 'back' ? `/product-images/${product.sku}-B.webp` : `/product-images/${product.sku}.webp`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block w-full h-full"
                         >
                           <img
-                            src={currentImage[product.id] === 'back' ? `/product-images/${product.sku}-B.png` : `/product-images/${product.sku}.png`}
+                            src={currentImage[product.id] === 'back' ? `/product-images/${product.sku}-B.webp` : `/product-images/${product.sku}.webp`}
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
@@ -415,7 +449,7 @@ const ProductCatalog = () => {
                     )}
                   </div>
                 </CardHeader>
- 
+
                 <CardContent className="p-4 flex flex-col justify-between flex-grow space-y-2"> {/* Adjusted padding and spacing */}
                   <div className="space-y-1">
                     <CardTitle className="text-lg font-semibold leading-tight">{product.name}</CardTitle>
@@ -473,27 +507,44 @@ const ProductCatalog = () => {
                       <span className="text-xl font-bold text-gray-600 line-through">${product.msrp.toFixed(2)}</span> {/* Adjusted color */}
                     </div>
 
+                    {/* Display Discounted Unit Price */}
+                    {skuDiscountedPrices[product.sku] !== undefined && (
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-sm font-medium text-muted-foreground">As low as:</span>
+                        <span className="text-xl font-bold text-primary">${skuDiscountedPrices[product.sku].toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Display Case Quantity */}
+                    {product.caseQuantity > 0 && (
+                       <div className="text-sm text-muted-foreground mb-2">
+                          Case Quantity: {product.caseQuantity} units
+                       </div>
+                    )}
+
                     <div className="flex items-center gap-2 w-full mb-3">
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => updateQuantity(product.id, -1)} // Decrement by 1 case
+                        onClick={() => updateQuantity(product.id, -1)} // Decrement by 1 unit
                         className="h-9 w-9"
-                        disabled={product.quantity === 0 || (quantities[product.id] || product.caseQuantity) <= product.caseQuantity} // Disable if quantity is 0 or already at minimum (1 case)
+                        disabled={product.quantity === 0 || (quantities[product.id] || 1) <= 1} // Disable if quantity is 0 or already at minimum (1 unit)
                       >
                         <Minus size={16} />
                       </Button>
                       <Input
                         type="number"
-                        min={product.caseQuantity} // Minimum is one case
-                        step={product.caseQuantity} // Step is one case
-                        value={quantities[product.id] || product.caseQuantity} // Default to one case
+                        min={1} // Minimum is one unit
+                        step={1} // Step is one unit
+                        value={quantities[product.id] || 1} // Display quantity in units
                         onChange={(e) => {
                           const value = parseInt(e.target.value);
-                          const newQty = Math.max(product.caseQuantity, isNaN(value) ? product.caseQuantity : Math.floor(value / product.caseQuantity) * product.caseQuantity); // Ensure multiple of caseQuantity and minimum of one case
+                          let newQtyUnits = Math.max(1, isNaN(value) ? 1 : value); // Ensure minimum of one unit
+                          // Ensure new quantity in units does not exceed available stock
+                          newQtyUnits = Math.min(newQtyUnits, product.quantity);
                           setQuantities(prev => ({
                             ...prev,
-                            [product.id]: Math.min(newQty, product.quantity) // Ensure not more than available stock
+                            [product.id]: newQtyUnits // Store number of units
                           }));
                         }}
                         className="w-full sm:w-24 text-center h-9"
@@ -502,22 +553,23 @@ const ProductCatalog = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => updateQuantity(product.id, 1)} // Increment by 1 case
+                        onClick={() => updateQuantity(product.id, 1)} // Increment by 1 unit
                         className="h-9 w-9"
-                        disabled={product.quantity === 0 || (quantities[product.id] || product.caseQuantity) + product.caseQuantity > product.quantity} // Disable if quantity is 0 or adding another case exceeds stock
+                        disabled={product.quantity === 0 || ((quantities[product.id] || 1) + 1) * product.caseQuantity > product.quantity} // Disable if quantity is 0 or adding another case exceeds stock
                       >
                         <Plus size={16} />
                       </Button>
+                    </div>
+<div className="text-sm text-muted-foreground mb-3">
+                      Total Cases: {quantities[product.id] || 1} | Total Units: {((quantities[product.id] || 1) * product.caseQuantity)}
                     </div>
 
                     <Button
                       onClick={() => handleAddToCart(product)}
                       className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-                      size="sm"
-                      disabled={product.quantity === 0}
+                      disabled={product.quantity === 0} // Disable if quantity is 0
                     >
-                      <Plus size={16} className="mr-2" />
-                      Add to Cart ({quantities[product.id] || product.caseQuantity} units)
+                      {product.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </Button>
                   </div>
                 </CardContent>
@@ -527,19 +579,11 @@ const ProductCatalog = () => {
         ) : (
           <Card className="py-16">
             <CardContent className="text-center">
-              <Package size={64} className="mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-xl font-medium text-foreground mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your filters or search terms to find what you're looking for.
-              </p>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear All Filters
-              </Button>
+              <RefreshCcw size={48} className="text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No products found matching the selected filters.</p>
             </CardContent>
           </Card>
         )}
-
-        {/* Loading indicator for infinite scroll */}
       </div>
     </div>
   );

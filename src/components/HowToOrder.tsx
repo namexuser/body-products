@@ -6,36 +6,20 @@ import { CheckCircle } from 'lucide-react';
 const HowToOrder = () => {
   const steps = [
     {
-      title: "Browse Product Catalog",
-      description: "Explore our extensive collection of body care products. Use filters to find products by type, scent, or search by name/SKU."
+      title: "Add to Cart",
+      description: "Pick your product, select case units, and add to cart. Adjust quantities anytime before checkout."
     },
     {
-      title: "View Product Details",
-      description: "Click 'View Full Details & Photo on Brand Website' to see high-resolution images and detailed product information on the manufacturer's official website."
+      title: "Review Cart & Discounts",
+      description: "Verify your selection and ensure a minimum of 250 units. Discounts apply based on grand total quantity."
     },
     {
-      title: "Add Items to Cart",
-      description: "Select quantities and add desired products to your cart. You can adjust quantities at any time before submitting your order."
+      title: "Submit Order",
+      description: "Provide your contact info and send your purchase order."
     },
     {
-      title: "Review Cart & Pricing",
-      description: "Visit your cart to review all items. Our tiered pricing system automatically calculates your estimated total based on order volume."
-    },
-    {
-      title: "Meet Minimum Requirements",
-      description: "Ensure your order meets the minimum purchase requirement of 250 units to qualify for our wholesale pricing."
-    },
-    {
-      title: "Submit Order Request",
-      description: "Fill in your contact information and submit your purchase order request. This is not a final purchase but a request for quotation."
-    },
-    {
-      title: "Order Confirmation",
-      description: "We will review your request and contact you within 24-48 hours to confirm availability, final pricing, and payment terms."
-    },
-    {
-      title: "Payment & Fulfillment",
-      description: "Upon confirmation, we'll provide payment instructions. Orders are typically processed and shipped within 3-5 business days after payment."
+      title: "Confirmation & Fulfillment",
+      description: "We’ll reach out same-day to confirm payment and arrange pickup/shipping details."
     }
   ];
 
@@ -67,8 +51,8 @@ const HowToOrder = () => {
                 1
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2">Explore Products</h3>
-                <p className="text-muted-foreground">Browse our product catalog and choose items by viewing details. Use filters for type or scent, or search by name/SKU.</p>
+                <h3 className="font-semibold text-lg mb-2">Add to Cart</h3>
+                <p className="text-muted-foreground">Pick your product, select case units, and add to cart. Adjust quantities anytime before checkout.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -76,8 +60,8 @@ const HowToOrder = () => {
                 2
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2">Add to Cart</h3>
-                <p className="text-muted-foreground">Select quantities and add products to your cart. Adjust quantities anytime before submitting.</p>
+                <h3 className="font-semibold text-lg mb-2">Review Cart & Discounts</h3>
+                <p className="text-muted-foreground">Verify your selection and ensure a minimum of 250 units. Discounts apply based on grand total quantity.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -85,8 +69,8 @@ const HowToOrder = () => {
                 3
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2">Review Cart & Pricing</h3>
-                <p className="text-muted-foreground">Check your cart to confirm items. Ensure your order meets the minimum requirement of 250 units. Our tiered pricing adjusts your estimated total based on order size.</p>
+                <h3 className="font-semibold text-lg mb-2">Submit Order</h3>
+                <p className="text-muted-foreground">Provide your contact info and send your purchase order.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -94,17 +78,8 @@ const HowToOrder = () => {
                 4
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-2">Submit Order</h3>
-                <p className="text-muted-foreground">Enter your contact details and submit your purchase order request.</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                5
-              </div>
-              <div>
                 <h3 className="font-semibold text-lg mb-2">Confirmation & Fulfillment</h3>
-                <p className="text-muted-foreground">We’ll review your request and contact you within 24-48 hours to confirm. Once confirmed, we’ll provide payment and pickup/shipping details. Orders are typically fulfilled within 2 business days.</p>
+                <p className="text-muted-foreground">We’ll reach out same-day to confirm payment and arrange pickup/shipping details.</p>
               </div>
             </div>
           </div>

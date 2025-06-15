@@ -13,6 +13,7 @@ export interface CartItem {
   scent: string | null;
   ingredients: string[] | null;
   msrp: number;
+  caseQuantity: number; // Add caseQuantity to CartItem interface
 }
 
 interface CartContextType {
@@ -92,7 +93,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      // When adding a new item, include caseQuantity
+      return [...prev, { ...product, quantity, caseQuantity: product.caseQuantity }];
     });
   };
 

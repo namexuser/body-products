@@ -36,9 +36,28 @@ const Cart = () => {
   const { totalMSRP, totalUnits, estimatedTotal, unitPrice, discountPercentage, statusMessage } = getCartTotal();
   const canSubmitOrder = totalUnits >= 250;
  
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    updateQuantity(productId, newQuantity);
+  const handleQuantityChange = (productId: string, changeInCases: number) => {
+    const item = cartItems.find(item => item.id === productId);
+    if (!item || item.caseQuantity <= 0) return;
+
+    const caseQuantity = Number(item.caseQuantity);
+    if (caseQuantity <= 0) {
+      console.error(`Invalid caseQuantity for product ${item.id}: ${item.caseQuantity}`);
+      return; // Prevent division by zero or invalid calculations
+    }
+    const currentCases = item.quantity / caseQuantity;
+    let newCases = currentCases + changeInCases;
+
+    // Ensure minimum is 1 case
+    newCases = Math.max(1, newCases);
+
+    const newQuantityUnits = newCases * caseQuantity;
+
+    // You might want to add a check here if newQuantityUnits exceeds available stock,
+    // although the Cart doesn't currently have stock information per item.
+    // If stock information is added to cart items, this check would be needed.
+
+    updateQuantity(productId, newQuantityUnits);
   };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -123,62 +142,6 @@ const Cart = () => {
         <p className="text-muted-foreground">Review your items and submit your purchase order</p>
       </div>
 
-      {/* Cart Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cart Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {cartItems.map(item => (
-              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 border rounded-lg">
-                <div className="flex-1 w-full sm:w-auto">
-                  {/* Display product name and SKU from cart item */}
-                  <h4 className="font-medium">{item.name}</h4>
-                  <p className="text-sm text-muted-foreground">SKU: {item.sku}</p> {/* Use item.sku */}
-                  <p className="text-sm text-muted-foreground">Type: {item.product_type}</p>
-                </div>
-
-                <div className="text-left sm:text-right w-full sm:w-auto">
-                  {/* Use item.msrp for price */}
-                  <p className="font-medium line-through">${item.msrp.toFixed(2)} each</p>
-                  <p className="text-sm text-muted-foreground">
-                    Subtotal: ${(item.msrp * item.quantity).toFixed(2)}
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-start">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                  >
-                    <Minus size={16} />
-                  </Button>
-                  <span className="w-12 text-center">{item.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                  >
-                    <Plus size={16} />
-                  </Button>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeFromCart(item.id)}
-                  className="text-red-600 hover:text-red-700 w-full sm:w-auto"
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Order Summary */}
       <Card>
         <CardHeader>
@@ -224,6 +187,73 @@ const Cart = () => {
           </p>
         </CardContent>
       </Card>
+
+      {/* Cart Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cart Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {cartItems.map(item => (
+              <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 border rounded-lg">
+                <div className="flex-1 w-full sm:w-auto">
+                  {/* Display product name and SKU from cart item */}
+                  <h4 className="font-medium">{item.name}</h4>
+                  <p className="text-sm text-muted-foreground">SKU: {item.sku}</p> {/* Use item.sku */}
+                  <p className="text-sm text-muted-foreground">Type: {item.product_type}</p>
+                </div>
+
+                <div className="text-left sm:text-right w-full sm:w-auto">
+                  {/* Use item.msrp for price */}
+                  <p className="font-medium line-through">${item.msrp.toFixed(2)} each</p>
+                  <p className="text-sm text-muted-foreground">
+                    Subtotal: ${(item.msrp * item.quantity).toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-start">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(item.id, -1)} // Decrement by 1 case
+                  >
+                    <Minus size={16} />
+                  </Button>
+                  {/* Display number of cases */}
+                  <span className="w-12 text-center">
+                    {item.caseQuantity > 0 ? formatNumber(item.quantity / item.caseQuantity) : 'N/A'}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(item.id, 1)} // Increment by 1 case
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
+
+                {/* Display total units */}
+                {item.caseQuantity > 0 && (
+                  <div className="text-sm text-muted-foreground w-full sm:w-auto text-center sm:text-left">
+                    ({item.quantity} units)
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-600 hover:text-red-700 w-full sm:w-auto"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Client Information Form */}
       <Card>
