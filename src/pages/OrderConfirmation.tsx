@@ -30,7 +30,7 @@ const OrderConfirmation = () => {
             Thank you for your order with OffPrice.Pro!
           </p>
           <p>
-            We’ve received your purchase order and are excited to work on it. You will receive a copy of your order by email.
+            We’ve received your purchase order and are excited to work on it. You will receive a copy of your order by email if not, check your spam folder.
           </p>
 
           <Separator />
