@@ -70,7 +70,7 @@ const HowToOrder = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-2">Submit Order</h3>
-                <p className="text-muted-foreground">Provide your contact info and send your purchase order.</p>
+                <p className="text-muted-foreground">Provide your contact info and submit your purchase order.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">

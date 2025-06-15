@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCart } from "../context/CartContext";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 // Helper function to format numbers with comma separators and fixed decimal places for currency
 const formatCurrency = (amount: number) => {
@@ -25,6 +26,7 @@ const validateEmail = (email: string): boolean => {
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart, getCartTotal } = useCart();
+  const navigate = useNavigate();
   const [clientInfo, setClientInfo] = useState({
     name: '',
     email: '',
@@ -113,7 +115,8 @@ const Cart = () => {
       if (data?.success) {
         toast.success(`Purchase order (ID: ${data.orderId}) submitted successfully! Confirmation email sent.`);
         setClientInfo({ name: '', email: '', city: '', phone: '' }); // Clear city and phone fields
-        clearCart();
+        clearCart(); // Clear cart before navigating
+        navigate('/order-confirmation', { state: { customerName: clientInfo.name } });
       } else {
         throw new Error(data?.error || 'Failed to submit order');
       }
@@ -139,7 +142,7 @@ const Cart = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-primary mb-4">Purchase Order</h2>
-        <p className="text-muted-foreground">Review your items and submit your purchase order</p>
+        <p className="text-muted-foreground">Please review your items and submit your order: 250+ units for discounts.</p>
       </div>
 
       {/* Order Summary */}

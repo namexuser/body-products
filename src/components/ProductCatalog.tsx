@@ -489,9 +489,9 @@ const ProductCatalog = () => {
                           </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-2 pt-2">
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 bg-[#8ddaf7] py-3 px-2 rounded">
                             {product.ingredients.map((ingredient, index) => (
-                               <Badge key={index} variant="outline" className="text-xs">
+                               <Badge key={index} variant="outline" className="text-xs text-gray-800 border-gray-400">
                                  {ingredient}
                                </Badge>
                             ))}
@@ -511,7 +511,7 @@ const ProductCatalog = () => {
                     {skuDiscountedPrices[product.sku] !== undefined && (
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-sm font-medium text-muted-foreground">As low as:</span>
-                        <span className="text-xl font-bold text-primary">${skuDiscountedPrices[product.sku].toFixed(2)}</span>
+                        <span className="text-xl font-bold text-primary" style={{ backgroundColor: '#FF8559', padding: '0 4px', borderRadius: '4px' }}>${skuDiscountedPrices[product.sku].toFixed(2)}</span>
                       </div>
                     )}
 
