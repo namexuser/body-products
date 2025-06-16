@@ -478,7 +478,7 @@ const ProductCatalog = () => {
                         className="mt-2"
                       >
                         <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full justify-between p-2 text-sm">
+                          <Button variant="ghost" size="sm" className="w-full justify-between p-2 text-sm bg-[#8ddaf7] border border-[#6cb8d4]">
                             <span className="flex items-center gap-2">
                                <Info size={14} />
                                Ingredients
