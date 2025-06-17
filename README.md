@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-This document provides a comprehensive overview of the Body Biz Orderflow web application, including instructions for setting up the development environment and deploying the application.
+This document provides a comprehensive overview of the Off-Price Pro web application, including instructions for setting up the development environment and deploying the application.
 
-Body Biz Orderflow is a modern web application designed to streamline the process of browsing products, managing a shopping cart, and submitting purchase orders. It provides a user-friendly interface for viewing a product catalog, adding items to a cart, and submitting the order details for processing. The application leverages a robust stack of technologies to ensure performance, scalability, and ease of maintenance.
+Off-Price Pro is a modern web application designed to streamline the process of browsing products, managing a shopping cart, and submitting purchase orders. It provides a user-friendly interface for viewing a product catalog, adding items to a cart, and submitting the order details for processing. The application leverages a robust stack of technologies to ensure performance, scalability, and ease of maintenance.
 
 ## Key Technologies
 
@@ -69,7 +69,7 @@ To run the application locally:
 npm run dev
 ```
 
-This will start the development server, usually accessible at `http://localhost:808` (Vite default port).
+This will start the development server, usually accessible at `http://localhost:8080` (Vite default port).
 
 ## Deployment
 
